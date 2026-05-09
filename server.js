@@ -4,8 +4,13 @@ import cors from "cors";
 import Stripe from "stripe";
 
 import { auraMap, tarotMap, getZodiac, getYearAnimal, getArrival } from "./lib/flameData.js";
-import { generateArtifactCopy } from "./lib/openaiClient.js";
-import { markSessionPaid, isSessionPaid, isSessionUsed, markSessionUsed } from "./lib/tokenStore.js";
+import { generateArtifactCopy } from "./lib/lib/openaiClient.js";
+import {
+  markSessionPaid,
+  isSessionPaid,
+  isSessionUsed,
+  markSessionUsed
+} from "./lib/lib/tokenStore.js";
 
 const app = express();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
