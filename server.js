@@ -7,7 +7,7 @@ import { generateArtifactCopy } from "./lib/openaiClient.js";
 import { markSessionPaid, isSessionPaid, isSessionUsed, markSessionUsed } from "./lib/tokenStore.js";
 import { auraMap, tarotMap, getZodiac, getYearAnimal, getArrival } from "./lib/flameData.js";
 
-const requiredEnv = ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "OPENAI_API_KEY", "BASE_URL", "WORDPRESS_URL"];
+const requiredEnv = ["STRIPE_SECRET_KEY", "OPENAI_API_KEY", "WORDPRESS_URL"];
 const missingEnv = requiredEnv.filter((key) => !process.env[key]);
 if (missingEnv.length) {
   console.error(`Missing required environment variables: ${missingEnv.join(", ")}`);
@@ -17,6 +17,7 @@ if (missingEnv.length) {
 const app = express();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const allowedOrigin = process.env.WORDPRESS_URL;
+const configuredBaseUrl = process.env.BASE_URL || null;
 const requestBuckets = new Map();
 const analytics = {
   miniReadingRequests: 0,
@@ -73,11 +74,16 @@ function validatePayload(body) {
   return null;
 }
 
-function getMockup(experience) {
-  if (experience === "aura") return `${process.env.BASE_URL}/mockups/aura-emerald.jpg`;
-  if (experience === "zodiac") return `${process.env.BASE_URL}/mockups/zodiac-taurus.jpg`;
-  if (experience === "tarot") return `${process.env.BASE_URL}/mockups/tarot-default.jpg`;
-  return `${process.env.BASE_URL}/mockups/full-artifact.jpg`;
+function getBaseUrl(req) {
+  return configuredBaseUrl || `${req.protocol}://${req.get("host")}`;
+}
+
+function getMockup(experience, req) {
+  const base = getBaseUrl(req);
+  if (experience === "aura") return `${base}/mockups/aura-emerald.jpg`;
+  if (experience === "zodiac") return `${base}/mockups/zodiac-taurus.jpg`;
+  if (experience === "tarot") return `${base}/mockups/tarot-default.jpg`;
+  return `${base}/mockups/full-artifact.jpg`;
 }
 
 app.get("/api/meta", (_req, res) => {
@@ -105,7 +111,7 @@ app.post("/api/mockup-preview", (req, res) => {
 
   return res.json({
     name,
-    mockupImage: `${process.env.BASE_URL}/mockups/full-artifact.jpg`,
+    mockupImage: `${getBaseUrl(req)}/mockups/full-artifact.jpg`,
     previewTitle: `${aura.title} Preview Candle`,
     previewLine: `${zodiac.sign} alignment with ${tarot.title}`,
     scentProfile: [aura.scent[0], zodiac.scent[1], tarot.scent[2]],
@@ -183,7 +189,7 @@ app.post("/api/create-checkout", async (req, res) => {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: lineItems,
-      success_url: `${process.env.BASE_URL}/success.html?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${getBaseUrl(req)}/success.html?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.WORDPRESS_URL}/your-artifact-page`,
       metadata: { productType }
     });
@@ -195,6 +201,9 @@ app.post("/api/create-checkout", async (req, res) => {
 });
 
 app.post("/webhook", (req, res) => {
+  if (!process.env.STRIPE_WEBHOOK_SECRET) {
+    return res.status(503).json({ error: "Webhook secret not configured." });
+  }
   try {
     const event = stripe.webhooks.constructEvent(req.body, req.headers["stripe-signature"], process.env.STRIPE_WEBHOOK_SECRET);
     if (event.type === "checkout.session.completed") markSessionPaid(event.data.object.id);
@@ -231,7 +240,7 @@ app.post("/api/render-flame", async (req, res) => {
     const copy = await generateArtifactCopy({ name, birthMonth, birthDay, birthYear, experience, aura, zodiac, animal, tarot, scentProfile });
 
     return res.json({
-      mockupImage: getMockup(experience),
+      mockupImage: getMockup(experience, req),
       arrival: getArrival(birthMonth, birthDay, birthYear),
       artifactTitle: copy.artifactTitle,
       identityLine: copy.identityLine,
