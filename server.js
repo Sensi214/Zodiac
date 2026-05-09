@@ -13,6 +13,27 @@ import {
 } from "./lib/tokenStore.js";
 
 const app = express();
+
+if (!process.env.STRIPE_SECRET_KEY) {
+  console.error("Missing STRIPE_SECRET_KEY");
+  process.exit(1);
+}
+
+if (!process.env.OPENAI_API_KEY) {
+  console.error("Missing OPENAI_API_KEY");
+  process.exit(1);
+}
+
+if (!process.env.WORDPRESS_URL) {
+  console.error("Missing WORDPRESS_URL");
+  process.exit(1);
+}
+
+if (!process.env.BASE_URL) {
+  console.error("Missing BASE_URL");
+  process.exit(1);
+}
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const allowedOrigin = process.env.WORDPRESS_URL;
