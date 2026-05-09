@@ -62,7 +62,6 @@ function validateDate(birthMonth, birthDay, birthYear) {
 
 function validatePayload(body) {
   const { name, birthMonth, birthDay, birthYear, experience, tarotCard } = body;
-
   if (!name || typeof name !== "string") return "Invalid name.";
   if (!Number.isInteger(birthMonth) || birthMonth < 1 || birthMonth > 12) return "Invalid month.";
   if (!Number.isInteger(birthDay) || birthDay < 1 || birthDay > 31) return "Invalid day.";
@@ -217,7 +216,6 @@ app.post("/api/render-flame", async (req, res) => {
 
     analytics.renderFlamePaid += 1;
     markSessionUsed(sessionId);
-
     const { name, birthMonth, birthDay, birthYear, experience, tarotCard } = req.body;
     const aura = auraMap[birthMonth];
     const zodiac = getZodiac(birthMonth, birthDay);
@@ -249,6 +247,4 @@ app.post("/api/render-flame", async (req, res) => {
 });
 
 const port = Number(process.env.PORT || 3000);
-app.listen(port, () => {
-  console.log(`Running on ${port}`);
-});
+app.listen(port, () => console.log(`Running on ${port}`));
