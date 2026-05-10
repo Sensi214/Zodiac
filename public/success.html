@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Payment Successful</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body style="font-family: Arial, sans-serif; background:#111; color:#fff; text-align:center; padding:60px;">
+  <h1>Payment received</h1>
+  <p>Sending you back to finish your artifact.</p>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get("session_id");
+    if (sessionId) localStorage.setItem("flame_session_id", sessionId);
+    window.location.href = "https://yourwordpresssite.com/your-artifact-page";
+  </script>
+</body>
+</html>
