@@ -6,6 +6,12 @@ import Stripe from "stripe";
 import { generateArtifactCopy } from "./lib/openaiClient.js";
 import { markSessionPaid, isSessionPaid, isSessionUsed, markSessionUsed } from "./lib/tokenStore.js";
 import { auraMap, tarotMap, getZodiac, getYearAnimal, getArrival } from "./lib/flameData.js";
+import {
+  normalizeEmail,
+  ensureSubscriber,
+  canUseMonthlyFreeReading,
+  markMonthlyFreeReadingUsed
+} from "./lib/subscriberStore.js";
 
 const requiredEnv = ["STRIPE_SECRET_KEY", "OPENAI_API_KEY", "WORDPRESS_URL"];
 const missingEnv = requiredEnv.filter((key) => !process.env[key]);
@@ -51,7 +57,11 @@ function rateLimit(req, res, next) {
 
 app.use("/webhook", express.raw({ type: "application/json" }));
 app.use(express.json());
-app.use(cors({ origin: allowedOrigin, methods: ["GET", "POST"] }));
+app.use(cors({
+  origin: allowedOrigin,
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "x-flame-session-id"]
+}));
 app.use(express.static("public"));
 app.use("/mockups", express.static("mockups"));
 app.use(rateLimit);
@@ -169,6 +179,88 @@ app.post("/api/mini-reading-sale", async (req, res) => {
   }
 });
 
+app.post("/api/subscriber/free-reading", async (req, res) => {
+  try {
+    const { email, readingType, name, birthMonth, birthDay, birthYear, tarotCard, auraIntention } = req.body || {};
+
+    // Validate email
+    if (!email || typeof email !== "string") {
+      return res.status(400).json({ error: "Invalid email." });
+    }
+
+    // Validate reading type
+    if (!["tarot", "zodiac", "aura"].includes(readingType)) {
+      return res.status(400).json({ error: "Invalid reading type. Only tarot, zodiac, or aura allowed." });
+    }
+
+    // Validate other payload fields
+    const validationError = validatePayload({ name, birthMonth, birthDay, birthYear, experience: readingType, tarotCard });
+    if (validationError) return res.status(400).json({ error: validationError });
+
+    const normalizedEmail = normalizeEmail(email);
+    await ensureSubscriber(normalizedEmail);
+
+    // Check if subscriber can use monthly free reading
+    if (!await canUseMonthlyFreeReading(normalizedEmail)) {
+      return res.status(403).json({
+        error: "You have already used your free monthly reading. Unlock the full artifact or come back next month."
+      });
+    }
+
+    // Generate reading
+    const aura = auraMap[birthMonth];
+    const zodiac = getZodiac(birthMonth, birthDay);
+    const animal = getYearAnimal(birthYear);
+    const tarot = tarotMap[tarotCard];
+
+    const scentProfile =
+      readingType === "aura" ? aura.scent :
+      readingType === "zodiac" ? zodiac.scent :
+      tarot.scent;
+
+    const copy = await generateArtifactCopy({
+      name,
+      birthMonth,
+      birthDay,
+      birthYear,
+      experience: readingType,
+      aura,
+      zodiac,
+      animal,
+      tarot,
+      scentProfile
+    });
+
+    // Mark reading as used only after successful generation
+    await markMonthlyFreeReadingUsed(normalizedEmail);
+
+    return res.json({
+      product: "subscriber_free_reading",
+      readingType,
+      email: normalizedEmail,
+      reading: {
+        title: copy.artifactTitle,
+        summary: copy.poeticReading,
+        identityLine: copy.identityLine
+      },
+      suggestedCandle: {
+        title: copy.artifactTitle,
+        scentProfile,
+        reason: readingType === "aura" ? copy.auraBody : readingType === "zodiac" ? copy.emberBody : copy.arcanaBody
+      },
+      upgrade: {
+        message: "Unlock your full Aura & Ember artifact for the complete candle profile.",
+        productType: "full_artifact"
+      }
+    });
+  } catch (err) {
+    console.error("Subscriber free reading error:", err);
+    return res.status(500).json({
+      error: err.message || "Free reading generation failed."
+    });
+  }
+});
+
 app.post("/api/create-checkout", async (req, res) => {
   const productType = req.body?.productType || "full_artifact";
   const fullPriceId = process.env.STRIPE_FULL_ARTIFACT_PRICE_ID;
@@ -196,8 +288,11 @@ app.post("/api/create-checkout", async (req, res) => {
 });
 
     return res.json({ url: session.url });
-  } catch {
-    return res.status(500).json({ error: "Could not create checkout session." });
+  } catch (err) {
+    console.error("Stripe checkout error:", err);
+    return res.status(500).json({
+      error: err.message || "Could not create checkout session."
+    });
   }
 });
 
