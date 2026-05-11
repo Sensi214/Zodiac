@@ -122,7 +122,7 @@
 
   #aura-ember-app .ae-reveal-img {
     width: 100%;
-    max-width: 620px;
+    max-width: 520px;
     max-height: 420px;
     object-fit: cover;
     border-radius: 12px;
@@ -273,6 +273,44 @@
     color: #f5f1e8 !important;
   }
 
+  #aura-ember-app .ae-focus-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  #aura-ember-app .ae-focus-btn {
+    padding: 16px;
+    border-radius: 9px;
+    border: 1px solid rgba(217,170,85,.35);
+    background: #161a20;
+    color: #f5f1e8 !important;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+  }
+
+  #aura-ember-app .ae-focus-btn:hover {
+    background: #1e2329;
+    border-color: #d9aa55;
+  }
+
+  #aura-ember-app .ae-focus-btn.active {
+    background: #d9aa55;
+    color: #111 !important;
+    border-color: #d9aa55;
+  }
+
+  #aura-ember-app .ae-checkout-form {
+    display: none;
+  }
+
+  #aura-ember-app .ae-checkout-form.visible {
+    display: block;
+  }
+
   @media (max-width: 700px) {
     #aura-ember-app .ae-intro h1 {
       font-size: 32px;
@@ -280,7 +318,8 @@
 
     #aura-ember-app .ae-grid,
     #aura-ember-app .ae-row,
-    #aura-ember-app .ae-two {
+    #aura-ember-app .ae-two,
+    #aura-ember-app .ae-focus-grid {
       grid-template-columns: 1fr;
     }
 
@@ -301,7 +340,6 @@
   />
 
   <div class="ae-intro">
-    <div class="ae-eyebrow">Sensi Candle Co.</div>
     <h1>Find the Candle That Matches Your Energy</h1>
     <p class="ae-muted">
       Choose a path, reveal your candle direction, and unlock a deeper personalized experience when you are ready.
@@ -313,7 +351,7 @@
       <div class="ae-card ae-product">
         <img src="https://sensicandleco.com/wp-content/uploads/2026/05/tarot-default.jpg" alt="Card Reading candle" />
         <span class="ae-tag">Card Reading</span>
-        <h3>Tarot Candle Preview</h3>
+        <h3>Card Reading</h3>
         <p>Pick your cards and reveal the candle connected to your path.</p>
         <button class="secondary" data-show="tarot-section">Explore Card Reading</button>
       </div>
@@ -321,7 +359,7 @@
       <div class="ae-card ae-product">
         <img src="https://sensicandleco.com/wp-content/uploads/2026/05/zodiac-taurus.png" alt="Birth Energy candle" />
         <span class="ae-tag">Birth Energy</span>
-        <h3>Zodiac Candle Preview</h3>
+        <h3>Birth Energy</h3>
         <p>Enter your birthday and discover the candle aligned with your sign.</p>
         <button class="secondary" data-show="zodiac-section">Explore Birth Energy</button>
       </div>
@@ -329,7 +367,7 @@
       <div class="ae-card ae-product">
         <img src="https://sensicandleco.com/wp-content/uploads/2026/05/aura-emerald.jpg" alt="Aura Energy candle" />
         <span class="ae-tag">Aura Energy</span>
-        <h3>Aura Candle Preview</h3>
+        <h3>Aura Energy</h3>
         <p>Choose your energy and reveal the candle that matches your aura.</p>
         <button class="secondary" data-show="aura-section">Explore Aura Energy</button>
       </div>
@@ -337,7 +375,7 @@
       <div class="ae-card ae-product">
         <img src="https://sensicandleco.com/wp-content/uploads/2026/05/full-artifact.png" alt="Full Aura and Ember Artifact" />
         <span class="ae-tag">Full Experience</span>
-        <h3>Aura & Ember Artifact</h3>
+        <h3>Full Experience</h3>
         <p>Unlock your personalized candle profile and complete scent story.</p>
         <button data-show="full-section">Explore Full Experience</button>
       </div>
@@ -435,36 +473,39 @@
       <div class="ae-card">
         <h2>Full Aura & Ember Artifact</h2>
         <p class="ae-muted">
-          Choose what you want your full experience to focus on, then unlock your personalized candle artifact.
+          Choose what you want your full experience to focus on.
         </p>
 
-        <label>Focus
-          <select id="full-experience">
-            <option value="full_artifact">Combine Everything</option>
-            <option value="tarot">My Cards</option>
-            <option value="zodiac">My Birth Energy</option>
-            <option value="aura">My Aura</option>
-          </select>
-        </label>
-
-        <label>Name <input id="full-name" placeholder="Your name" autocomplete="name" /></label>
-
-        <div class="ae-row">
-          <label>Month <input id="full-month" type="number" min="1" max="12" placeholder="5" /></label>
-          <label>Day <input id="full-day" type="number" min="1" max="31" placeholder="9" /></label>
-          <label>Year <input id="full-year" type="number" min="1900" max="2099" placeholder="1990" /></label>
+        <div id="focus-selection">
+          <p class="ae-muted">Select your focus:</p>
+          <div class="ae-focus-grid">
+            <button class="ae-focus-btn" data-focus="tarot">My Cards</button>
+            <button class="ae-focus-btn" data-focus="zodiac">My Birth Energy</button>
+            <button class="ae-focus-btn" data-focus="aura">My Aura</button>
+            <button class="ae-focus-btn" data-focus="full_artifact">Combine Everything</button>
+          </div>
         </div>
 
-        <label>Tarot Archetype
-          <select id="full-tarot">
-            <option value="wanderer">The Wanderer — New Beginnings</option>
-          </select>
-        </label>
+        <div id="checkout-form" class="ae-checkout-form">
+          <label>Name <input id="full-name" placeholder="Your name" autocomplete="name" /></label>
 
-        <button id="checkout-btn">Unlock Full Experience</button>
+          <div class="ae-row">
+            <label>Month <input id="full-month" type="number" min="1" max="12" placeholder="5" /></label>
+            <label>Day <input id="full-day" type="number" min="1" max="31" placeholder="9" /></label>
+            <label>Year <input id="full-year" type="number" min="1900" max="2099" placeholder="1990" /></label>
+          </div>
+
+          <label>Tarot Archetype
+            <select id="full-tarot">
+              <option value="wanderer">The Wanderer — New Beginnings</option>
+            </select>
+          </label>
+
+          <button id="checkout-btn">Unlock Full Experience</button>
+        </div>
       </div>
 
-      <div class="ae-card">
+      <div class="ae-card" id="render-card" style="display: none;">
         <h2>After Payment</h2>
         <p class="ae-muted">After checkout returns you to this page, click below to reveal your full artifact.</p>
         <button id="render-btn" class="secondary">Render My Artifact</button>
@@ -578,6 +619,7 @@
         if (payload.birthDay) el("full-day").value = payload.birthDay;
         if (payload.birthYear) el("full-year").value = payload.birthYear;
         if (payload.tarotCard) el("full-tarot").value = payload.tarotCard;
+        if (payload.experience) el("full-experience").value = payload.experience;
       }
 
       function previewUpgradeButton() {
@@ -589,7 +631,23 @@
         if (button) {
           showSection(button.getAttribute("data-show"));
         }
+
+        const focusBtn = event.target.closest("[data-focus]");
+        if (focusBtn) {
+          selectFocus(focusBtn.getAttribute("data-focus"));
+        }
       });
+
+      function selectFocus(focusType) {
+        document.querySelectorAll("#aura-ember-app .ae-focus-btn").forEach(function (btn) {
+          btn.classList.remove("active");
+        });
+
+        document.querySelector('[data-focus="' + focusType + '"]').classList.add("active");
+        el("full-experience").value = focusType;
+        el("checkout-form").classList.add("visible");
+        el("checkout-form").scrollIntoView({ behavior: "smooth", block: "start" });
+      }
 
       document.addEventListener("DOMContentLoaded", function () {
         const saved = localStorage.getItem("flame_pending_payload");
@@ -604,8 +662,13 @@
 
         if (sessionId) {
           showSection("full-section");
+          document.querySelectorAll("#aura-ember-app .ae-focus-btn").forEach(function (btn) {
+            btn.classList.remove("active");
+          });
+          el("checkout-form").classList.remove("visible");
+          el("render-card").style.display = "block";
           el("render-out").innerHTML =
-            '<p class="ae-success">Payment found. Click “Render My Artifact” to reveal your full artifact.</p>';
+            '<p class="ae-success">Payment found. Click "Render My Artifact" to reveal your full artifact.</p>';
         }
       });
 
@@ -621,7 +684,7 @@
           "<p><strong>" + c1 + " • " + c2 + " • " + c3 + " • " + c4 + "</strong></p>" +
           "<p>Your spread points toward movement, reflection, and the courage to step into a new path. This candle preview is designed for seekers, dreamers, and anyone standing at the edge of change.</p>" +
           "<div>" + renderScents(["Vanilla", "Sandalwood", "Eucalyptus"]) + "</div>" +
-          "<p class='ae-muted'>This is your first look. Unlock the full experience for a deeper personalized candle profile.</p>" +
+          "<p class='ae-muted'>Ready for more? Unlock the full experience for your complete personalized candle profile.</p>" +
           previewUpgradeButton();
       });
 
@@ -655,7 +718,7 @@
           "<p><strong>Aligned • Grounded • Personal</strong></p>" +
           "<p>Your birth energy preview reflects the rhythm of your sign — a scent direction shaped by identity, nature, and inner timing.</p>" +
           "<div>" + renderScents(["Eucalyptus", "Vanilla", "Sandalwood"]) + "</div>" +
-          "<p class='ae-muted'>Unlock the full experience to reveal your complete birth-energy candle story.</p>" +
+          "<p class='ae-muted'>Ready for more? Unlock the full experience for your complete birth-energy candle story.</p>" +
           previewUpgradeButton();
       });
 
@@ -664,11 +727,11 @@
 
         el("aura-out").innerHTML =
           '<img class="ae-reveal-img" src="https://sensicandleco.com/wp-content/uploads/2026/05/aura-emerald.jpg" alt="Aura Energy candle preview" />' +
-          "<h3>Aura Emerald Preview</h3>" +
+          "<h3>Aura " + energy + " Preview</h3>" +
           "<p><strong>Energy selected: " + energy + "</strong></p>" +
           "<p>Your aura preview reflects the energy you are calling in. This candle direction is designed to help you center, elevate, and return to your chosen frequency.</p>" +
           "<div>" + renderScents(["Lavender", "Vanilla", "Sandalwood"]) + "</div>" +
-          "<p class='ae-muted'>Unlock the full experience to turn this aura direction into a complete personalized candle profile.</p>" +
+          "<p class='ae-muted'>Ready for more? Unlock the full experience to turn this aura direction into a complete personalized candle profile.</p>" +
           previewUpgradeButton();
       });
 
@@ -681,7 +744,7 @@
 
         try {
           const data = await callJson("/api/create-checkout", {
-            productType: "full_artifact"
+            productType: payload.experience || "full_artifact"
           });
 
           if (!data.url) {
