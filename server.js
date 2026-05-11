@@ -187,12 +187,13 @@ app.post("/api/create-checkout", async (req, res) => {
     analytics.checkoutByType[productType] = (analytics.checkoutByType[productType] || 0) + 1;
 
     const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      line_items: lineItems,
-      success_url: `${getBaseUrl(req)}/success.html?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.WORDPRESS_URL}/your-artifact-page`,
-      metadata: { productType }
-    });
+  mode: "payment",
+  line_items: lineItems,
+  allow_promotion_codes: true,
+  success_url: `${getBaseUrl(req)}/success.html?session_id={CHECKOUT_SESSION_ID}`,
+  cancel_url: `${process.env.WORDPRESS_URL}/your-artifact-page`,
+  metadata: { productType }
+});
 
     return res.json({ url: session.url });
   } catch {
