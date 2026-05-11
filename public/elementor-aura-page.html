@@ -487,6 +487,8 @@
         </div>
 
         <div id="checkout-form" class="ae-checkout-form">
+          <input id="full-experience" type="hidden" value="full_artifact" />
+
           <label>Name <input id="full-name" placeholder="Your name" autocomplete="name" /></label>
 
           <div class="ae-row">
@@ -619,7 +621,6 @@
         if (payload.birthDay) el("full-day").value = payload.birthDay;
         if (payload.birthYear) el("full-year").value = payload.birthYear;
         if (payload.tarotCard) el("full-tarot").value = payload.tarotCard;
-        if (payload.experience) el("full-experience").value = payload.experience;
       }
 
       function previewUpgradeButton() {
@@ -658,18 +659,13 @@
           } catch (e) {}
         }
 
-        const sessionId = localStorage.getItem("flame_session_id");
-
-        if (sessionId) {
-          showSection("full-section");
-          document.querySelectorAll("#aura-ember-app .ae-focus-btn").forEach(function (btn) {
-            btn.classList.remove("active");
-          });
-          el("checkout-form").classList.remove("visible");
-          el("render-card").style.display = "block";
-          el("render-out").innerHTML =
-            '<p class="ae-success">Payment found. Click "Render My Artifact" to reveal your full artifact.</p>';
-        }
+        localStorage.removeItem("flame_session_id");
+        showSection("full-section");
+        document.querySelectorAll("#aura-ember-app .ae-focus-btn").forEach(function (btn) {
+          btn.classList.remove("active");
+        });
+        el("checkout-form").classList.remove("visible");
+        el("render-card").style.display = "none";
       });
 
       el("tarot-preview-btn").addEventListener("click", function () {
