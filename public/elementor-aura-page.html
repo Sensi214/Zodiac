@@ -107,14 +107,14 @@
   #aura-ember-app .ae-product {
     display: flex;
     flex-direction: column;
-    min-height: auto;
   }
 
   #aura-ember-app .ae-product img {
     width: 100%;
-    height: 280px;
-    object-fit: cover;
+    height: 220px;
+    object-fit: contain;
     object-position: center;
+    background: #050505;
     border-radius: 12px;
     margin-bottom: 16px;
     display: block;
@@ -150,12 +150,11 @@
   #aura-ember-app .ae-product p {
     text-align: center;
     color: #cfc6b9 !important;
-    margin-bottom: 18px;
+    margin-bottom: 12px;
   }
 
   #aura-ember-app button {
     width: 100%;
-    margin-top: auto;
     padding: 13px;
     border-radius: 9px;
     border: 1px solid rgba(217,170,85,.55);
@@ -273,6 +272,14 @@
     color: #f5f1e8 !important;
   }
 
+  #aura-ember-app .ae-focus-selection {
+    display: none;
+  }
+
+  #aura-ember-app .ae-focus-selection.visible {
+    display: block;
+  }
+
   #aura-ember-app .ae-focus-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -309,6 +316,7 @@
 
   #aura-ember-app .ae-checkout-form.visible {
     display: block;
+    margin-top: 24px;
   }
 
   @media (max-width: 700px) {
@@ -324,7 +332,7 @@
     }
 
     #aura-ember-app .ae-product img {
-      height: 320px;
+      height: 220px;
     }
 
     #aura-ember-app .ae-gift-content h2 {
@@ -476,7 +484,7 @@
           Choose what you want your full experience to focus on.
         </p>
 
-        <div id="focus-selection">
+        <div id="focus-selection" class="ae-focus-selection">
           <p class="ae-muted">Select your focus:</p>
           <div class="ae-focus-grid">
             <button class="ae-focus-btn" data-focus="tarot">My Cards</button>
@@ -631,6 +639,9 @@
         const button = event.target.closest("[data-show]");
         if (button) {
           showSection(button.getAttribute("data-show"));
+          if (button.getAttribute("data-show") === "full-section") {
+            el("focus-selection").classList.add("visible");
+          }
         }
 
         const focusBtn = event.target.closest("[data-focus]");
@@ -660,7 +671,7 @@
         }
 
         localStorage.removeItem("flame_session_id");
-        showSection("full-section");
+        el("focus-selection").classList.remove("visible");
         document.querySelectorAll("#aura-ember-app .ae-focus-btn").forEach(function (btn) {
           btn.classList.remove("active");
         });
@@ -777,7 +788,7 @@
           birthMonth: Number(value("full-month")),
           birthDay: Number(value("full-day")),
           birthYear: Number(value("full-year")),
-          tarotCard: value("full-tarot"),
+          taratCard: value("full-tarot"),
           experience: value("full-experience")
         };
 
