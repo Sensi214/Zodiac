@@ -1,858 +1,191 @@
-<script>
-  (function () {
-    const params = new URLSearchParams(window.location.search);
-    const sessionId = params.get("session_id");
-
-    if (sessionId) {
-      localStorage.setItem("flame_session_id", sessionId);
-      const cleanUrl = window.location.origin + window.location.pathname;
-      window.history.replaceState({}, document.title, cleanUrl);
-    }
-  })();
-</script>
-
-<div id="aura-ember-app">
-<style>
-  #aura-ember-app {
-    font-family: Arial, sans-serif;
-    background: #050505 !important;
-    color: #f5f1e8 !important;
-    max-width: 1180px;
-    margin: 0 auto;
-    border-radius: 18px;
-    overflow: hidden;
-  }
-
-  #aura-ember-app * {
-    box-sizing: border-box;
-  }
-
-  #aura-ember-app h1,
-  #aura-ember-app h2,
-  #aura-ember-app h3,
-  #aura-ember-app p,
-  #aura-ember-app label {
-    color: inherit;
-  }
-
-  #aura-ember-app h1,
-  #aura-ember-app h2,
-  #aura-ember-app h3 {
-    margin: 0 0 10px;
-  }
-
-  #aura-ember-app p {
-    line-height: 1.5;
-  }
-
-  #aura-ember-app .ae-hero-img {
-    width: 100%;
-    display: block;
-    max-height: 620px;
-    object-fit: cover;
-    object-position: center;
-    background: #050505;
-  }
-
-  #aura-ember-app .ae-intro {
-    text-align: center;
-    padding: 34px 22px 22px;
-    background: #050505 !important;
-  }
-
-  #aura-ember-app .ae-eyebrow,
-  #aura-ember-app .ae-tag {
-    color: #d9aa55 !important;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    font-size: 12px;
-  }
-
-  #aura-ember-app .ae-intro h1 {
-    font-family: Georgia, serif;
-    font-size: 46px;
-    font-weight: 500;
-    line-height: 1.08;
-    color: #f5f1e8 !important;
-  }
-
-  #aura-ember-app .ae-muted {
-    color: #cfc6b9 !important;
-  }
-
-  #aura-ember-app .ae-wrap {
-    padding: 18px 22px 56px;
-    background:
-      radial-gradient(circle at top, rgba(41, 27, 12, .75), rgba(5,5,5,1) 38%),
-      #050505 !important;
-  }
-
-  #aura-ember-app .ae-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px;
-    margin-top: 18px;
-  }
-
-  #aura-ember-app .ae-card {
-    background: #101114 !important;
-    border: 1px solid rgba(217, 170, 85, .35);
-    border-radius: 16px;
-    padding: 18px;
-    margin-top: 16px;
-    box-shadow: 0 14px 34px rgba(0,0,0,.45);
-    color: #f5f1e8 !important;
-  }
-
-  #aura-ember-app .ae-product {
-    display: flex;
-    flex-direction: column;
-  }
-
-  #aura-ember-app .ae-product img {
-    width: 100%;
-    height: 220px;
-    object-fit: contain;
-    object-position: center;
-    background: #050505;
-    border-radius: 12px;
-    margin-bottom: 16px;
-    display: block;
-  }
-
-  #aura-ember-app .ae-reveal-img {
-    width: 100%;
-    max-width: 520px;
-    max-height: 420px;
-    object-fit: cover;
-    border-radius: 12px;
-    margin: 0 auto 16px;
-    display: block;
-  }
-
-  #aura-ember-app #mockup-image {
-    width: 100%;
-    max-width: 520px;
-    max-height: 520px;
-    object-fit: cover;
-    border-radius: 12px;
-    margin: 18px auto;
-    display: none;
-  }
-
-  #aura-ember-app .ae-product h3 {
-    font-family: Georgia, serif;
-    font-size: 26px;
-    text-align: center;
-    color: #f5f1e8 !important;
-  }
-
-  #aura-ember-app .ae-product p {
-    text-align: center;
-    color: #cfc6b9 !important;
-    margin-bottom: 12px;
-  }
-
-  #aura-ember-app button {
-    width: 100%;
-    padding: 13px;
-    border-radius: 9px;
-    border: 1px solid rgba(217,170,85,.55);
-    background: #d9aa55;
-    color: #111 !important;
-    font-weight: 800;
-    cursor: pointer;
-    font-size: 16px;
-  }
-
-  #aura-ember-app button.secondary {
-    background: #161a20;
-    color: #ffffff !important;
-  }
-
-  #aura-ember-app button:disabled {
-    opacity: .6;
-    cursor: not-allowed;
-  }
-
-  #aura-ember-app label {
-    display: block;
-    margin-top: 12px;
-    font-weight: 700;
-    color: #f5f1e8 !important;
-  }
-
-  #aura-ember-app input,
-  #aura-ember-app select {
-    width: 100%;
-    margin-top: 6px;
-    padding: 12px;
-    border-radius: 9px;
-    border: 1px solid #3a3f47;
-    background: #ffffff !important;
-    color: #111111 !important;
-    font-size: 16px;
-  }
-
-  #aura-ember-app .ae-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 12px;
-  }
-
-  #aura-ember-app .ae-two {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-
-  #aura-ember-app .ae-section {
-    display: none;
-    margin-top: 24px;
-  }
-
-  #aura-ember-app .ae-section.active {
-    display: block;
-  }
-
-  #aura-ember-app .ae-output {
-    background: #0b0c0e !important;
-    color: #f5f1e8 !important;
-    border: 1px solid #282d35;
-    border-radius: 12px;
-    padding: 16px;
-    margin-top: 14px;
-  }
-
-  #aura-ember-app .ae-pill {
-    display: inline-block;
-    background: #202631;
-    color: #d9aa55 !important;
-    padding: 7px 11px;
-    border-radius: 999px;
-    margin: 5px 5px 5px 0;
-    font-size: 14px;
-  }
-
-  #aura-ember-app .ae-error {
-    color: #ffb4b4 !important;
-  }
-
-  #aura-ember-app .ae-success {
-    color: #d7ffd7 !important;
-  }
-
-  #aura-ember-app .ae-gift {
-    margin-top: 36px;
-    border-radius: 18px;
-    overflow: hidden;
-    border: 1px solid rgba(217,170,85,.35);
-    background: #101114 !important;
-    color: #f5f1e8 !important;
-  }
-
-  #aura-ember-app .ae-gift img {
-    width: 100%;
-    display: block;
-    max-height: 560px;
-    object-fit: cover;
-    object-position: center;
-  }
-
-  #aura-ember-app .ae-gift-content {
-    padding: 28px;
-    text-align: center;
-    background: #101114 !important;
-  }
-
-  #aura-ember-app .ae-gift-content h2 {
-    font-family: Georgia, serif;
-    font-size: 36px;
-    font-weight: 500;
-    color: #f5f1e8 !important;
-  }
-
-  #aura-ember-app .ae-focus-selection {
-    display: none;
-  }
-
-  #aura-ember-app .ae-focus-selection.visible {
-    display: block;
-  }
-
-  #aura-ember-app .ae-focus-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-top: 16px;
-  }
-
-  #aura-ember-app .ae-focus-btn {
-    padding: 16px;
-    border-radius: 9px;
-    border: 1px solid rgba(217,170,85,.35);
-    background: #161a20;
-    color: #f5f1e8 !important;
-    font-weight: 600;
-    cursor: pointer;
-    font-size: 14px;
-    transition: all 0.2s ease;
-  }
-
-  #aura-ember-app .ae-focus-btn:hover {
-    background: #1e2329;
-    border-color: #d9aa55;
-  }
-
-  #aura-ember-app .ae-focus-btn.active {
-    background: #d9aa55;
-    color: #111 !important;
-    border-color: #d9aa55;
-  }
-
-  #aura-ember-app .ae-checkout-form {
-    display: none;
-  }
-
-  #aura-ember-app .ae-checkout-form.visible {
-    display: block;
-    margin-top: 24px;
-  }
-
-  @media (max-width: 700px) {
-    #aura-ember-app .ae-intro h1 {
-      font-size: 32px;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aura & Ember | Landing</title>
+  <style>
+    :root {
+      --bg: #0b0b0d;
+      --panel: #141418;
+      --gold: #d4af37;
+      --text: #f4f2ec;
+      --muted: #c9c4b6;
+      --border: #2a2a30;
     }
 
-    #aura-ember-app .ae-grid,
-    #aura-ember-app .ae-row,
-    #aura-ember-app .ae-two,
-    #aura-ember-app .ae-focus-grid {
-      grid-template-columns: 1fr;
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top, #13131a 0%, var(--bg) 45%);
+      color: var(--text);
+      font-family: "Inter", "Segoe UI", Arial, sans-serif;
+      line-height: 1.45;
     }
 
-    #aura-ember-app .ae-product img {
-      height: 220px;
+    .hero-image {
+      width: 100%;
+      display: block;
+      max-height: 540px;
+      object-fit: cover;
+      border-bottom: 1px solid var(--border);
     }
 
-    #aura-ember-app .ae-gift-content h2 {
-      font-size: 28px;
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 40px 20px 64px;
     }
-  }
-</style> 
 
-  <img
-    class="ae-hero-img"
-    src="https://sensicandleco.com/wp-content/uploads/2026/05/image.png"
-    alt="Sensi Candle Co candle experience"
-  />
+    h1 {
+      margin: 0;
+      text-align: center;
+      color: var(--gold);
+      font-size: clamp(1.9rem, 3.6vw, 3rem);
+      letter-spacing: 0.01em;
+    }
 
-  <div class="ae-intro">
+    .subtext {
+      max-width: 820px;
+      margin: 14px auto 34px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+      margin-bottom: 36px;
+    }
+
+    .card {
+      background: linear-gradient(180deg, #17171d 0%, #111116 100%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+    }
+
+    .card img {
+      width: 100%;
+      height: 250px;
+      object-fit: cover;
+      display: block;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-content {
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 1.2rem;
+      color: var(--text);
+    }
+
+    .button-link {
+      display: inline-block;
+      text-decoration: none;
+      color: #111;
+      background: linear-gradient(135deg, #e4c15e 0%, var(--gold) 100%);
+      font-weight: 700;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid #b99229;
+      width: fit-content;
+    }
+
+    .gift-section {
+      background: linear-gradient(180deg, #18181f 0%, #121219 100%);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .gift-section img {
+      width: 100%;
+      display: block;
+      object-fit: cover;
+      max-height: 420px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .gift-content {
+      padding: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .gift-content h2 {
+      margin: 0;
+      color: var(--gold);
+      font-size: 1.35rem;
+    }
+
+    @media (max-width: 820px) {
+      .grid { grid-template-columns: 1fr; }
+      .card img { height: 220px; }
+    }
+  </style>
+</head>
+<body>
+  <img class="hero-image" src="https://sensicandleco.com/wp-content/uploads/2026/05/image.png" alt="Aura & Ember hero" />
+
+  <main class="container">
     <h1>Find the Candle That Matches Your Energy</h1>
-    <p class="ae-muted">
-      Choose a path, reveal your candle direction, and unlock a deeper personalized experience when you are ready.
-    </p>
-  </div>
+    <p class="subtext">Choose a path, reveal your candle direction, and unlock a deeper personalized experience when you are ready.</p>
 
-  <div class="ae-wrap">
-    <div class="ae-grid">
-      <div class="ae-card ae-product">
-        <img src="https://sensicandleco.com/wp-content/uploads/2026/05/tarot-default.jpg" alt="Card Reading candle" />
-        <span class="ae-tag">Card Reading</span>
-        <h3>Card Reading</h3>
-        <p>Pick your cards and reveal the candle connected to your path.</p>
-        <button class="secondary" data-show="tarot-section">Explore Card Reading</button>
-      </div>
-
-      <div class="ae-card ae-product">
-        <img src="https://sensicandleco.com/wp-content/uploads/2026/05/zodiac-taurus.png" alt="Birth Energy candle" />
-        <span class="ae-tag">Birth Energy</span>
-        <h3>Birth Energy</h3>
-        <p>Enter your birthday and discover the candle aligned with your sign.</p>
-        <button class="secondary" data-show="zodiac-section">Explore Birth Energy</button>
-      </div>
-
-      <div class="ae-card ae-product">
-        <img src="https://sensicandleco.com/wp-content/uploads/2026/05/aura-emerald.jpg" alt="Aura Energy candle" />
-        <span class="ae-tag">Aura Energy</span>
-        <h3>Aura Energy</h3>
-        <p>Choose your energy and reveal the candle that matches your aura.</p>
-        <button class="secondary" data-show="aura-section">Explore Aura Energy</button>
-      </div>
-
-      <div class="ae-card ae-product">
-        <img src="https://sensicandleco.com/wp-content/uploads/2026/05/full-artifact.png" alt="Full Aura and Ember Artifact" />
-        <span class="ae-tag">Full Experience</span>
-        <h3>Full Experience</h3>
-        <p>Unlock your personalized candle profile and complete scent story.</p>
-        <button data-show="full-section">Explore Full Experience</button>
-      </div>
-    </div>
-
-    <div id="tarot-section" class="ae-section">
-      <div class="ae-card">
-        <h2>Card Reading Preview</h2>
-        <p class="ae-muted">
-          Pick four cards. This preview reveals the feeling of your candle path before the deeper personalized experience.
-        </p>
-
-        <div class="ae-two">
-          <label>Card 1: Current Energy
-            <select id="tarot-card-1">
-              <option>The Wanderer</option>
-              <option>The Flamekeeper</option>
-              <option>The Mirror</option>
-              <option>The Starpath</option>
-            </select>
-          </label>
-
-          <label>Card 2: What Is Opening
-            <select id="tarot-card-2">
-              <option>The Starpath</option>
-              <option>The Wanderer</option>
-              <option>The Hearth</option>
-              <option>The Bloom</option>
-            </select>
-          </label>
-
-          <label>Card 3: What To Release
-            <select id="tarot-card-3">
-              <option>The Mirror</option>
-              <option>The Veil</option>
-              <option>The Anchor</option>
-              <option>The Flamekeeper</option>
-            </select>
-          </label>
-
-          <label>Card 4: Candle Guidance
-            <select id="tarot-card-4">
-              <option>The Wanderer</option>
-              <option>The Hearth</option>
-              <option>The Anchor</option>
-              <option>The Bloom</option>
-            </select>
-          </label>
+    <section class="grid" aria-label="Experience paths">
+      <article class="card">
+        <img src="https://sensicandleco.com/wp-content/uploads/2026/05/tarot-default.jpg" alt="Card Reading" />
+        <div class="card-content">
+          <h2>Card Reading</h2>
+          <a class="button-link" href="/card-reading">Enter Card Reading</a>
         </div>
+      </article>
 
-        <button id="tarot-preview-btn" class="secondary">Reveal My Candle Preview</button>
-        <div id="tarot-out" class="ae-output">Waiting...</div>
-      </div>
-    </div>
-
-    <div id="zodiac-section" class="ae-section">
-      <div class="ae-card">
-        <h2>Birth Energy Preview</h2>
-        <p class="ae-muted">Enter your birthday to reveal a sign-based candle direction.</p>
-
-        <div class="ae-row">
-          <label>Month <input id="zodiac-month" type="number" min="1" max="12" placeholder="5" /></label>
-          <label>Day <input id="zodiac-day" type="number" min="1" max="31" placeholder="9" /></label>
-          <label>Year <input id="zodiac-year" type="number" min="1900" max="2099" placeholder="1990" /></label>
+      <article class="card">
+        <img src="https://sensicandleco.com/wp-content/uploads/2026/05/zodiac-taurus.png" alt="Birth Energy" />
+        <div class="card-content">
+          <h2>Birth Energy</h2>
+          <a class="button-link" href="/birth-energy">Enter Birth Energy</a>
         </div>
+      </article>
 
-        <button id="zodiac-preview-btn" class="secondary">Reveal My Candle Preview</button>
-        <div id="zodiac-out" class="ae-output">Waiting...</div>
-      </div>
-    </div>
-
-    <div id="aura-section" class="ae-section">
-      <div class="ae-card">
-        <h2>Aura Energy Preview</h2>
-        <p class="ae-muted">Choose the energy you are calling in.</p>
-
-        <label>Energy
-          <select id="aura-energy">
-            <option>Calm</option>
-            <option>Confidence</option>
-            <option>Love</option>
-            <option>Protection</option>
-            <option>Clarity</option>
-            <option>Renewal</option>
-            <option>Abundance</option>
-          </select>
-        </label>
-
-        <button id="aura-preview-btn" class="secondary">Reveal My Candle Preview</button>
-        <div id="aura-out" class="ae-output">Waiting...</div>
-      </div>
-    </div>
-
-    <div id="full-section" class="ae-section">
-      <div class="ae-card">
-        <h2>Full Aura & Ember Artifact</h2>
-        <p class="ae-muted">
-          Choose what you want your full experience to focus on.
-        </p>
-
-        <div id="focus-selection" class="ae-focus-selection">
-          <p class="ae-muted">Select your focus:</p>
-          <div class="ae-focus-grid">
-            <button class="ae-focus-btn" data-focus="tarot">My Cards</button>
-            <button class="ae-focus-btn" data-focus="zodiac">My Birth Energy</button>
-            <button class="ae-focus-btn" data-focus="aura">My Aura</button>
-            <button class="ae-focus-btn" data-focus="full_artifact">Combine Everything</button>
-          </div>
+      <article class="card">
+        <img src="https://sensicandleco.com/wp-content/uploads/2026/05/aura-emerald.jpg" alt="Aura Energy" />
+        <div class="card-content">
+          <h2>Aura Energy</h2>
+          <a class="button-link" href="/aura-energy">Enter Aura Energy</a>
         </div>
+      </article>
 
-        <div id="checkout-form" class="ae-checkout-form">
-          <input id="full-experience" type="hidden" value="full_artifact" />
-
-          <label>Name <input id="full-name" placeholder="Your name" autocomplete="name" /></label>
-
-          <div class="ae-row">
-            <label>Month <input id="full-month" type="number" min="1" max="12" placeholder="5" /></label>
-            <label>Day <input id="full-day" type="number" min="1" max="31" placeholder="9" /></label>
-            <label>Year <input id="full-year" type="number" min="1900" max="2099" placeholder="1990" /></label>
-          </div>
-
-          <label>Tarot Archetype
-            <select id="full-tarot">
-              <option value="wanderer">The Wanderer — New Beginnings</option>
-            </select>
-          </label>
-
-          <button id="checkout-btn">Unlock Full Experience</button>
+      <article class="card">
+        <img src="https://sensicandleco.com/wp-content/uploads/2026/05/full-artifact.png" alt="Full Experience" />
+        <div class="card-content">
+          <h2>Full Experience</h2>
+          <a class="button-link" href="/full-experience">Enter Full Experience</a>
         </div>
-      </div>
+      </article>
+    </section>
 
-      <div class="ae-card" id="render-card" style="display: none;">
-        <h2>After Payment</h2>
-        <p class="ae-muted">After checkout returns you to this page, click below to reveal your full artifact.</p>
-        <button id="render-btn" class="secondary">Render My Artifact</button>
-        <img id="mockup-image" alt="Aura & Ember candle mockup" />
-        <div id="render-out" class="ae-output">Waiting...</div>
-      </div>
-    </div>
-
-    <div class="ae-gift">
+    <section class="gift-section" aria-label="Birthday Candle Gift">
       <img src="https://sensicandleco.com/wp-content/uploads/2026/05/imagesss.png" alt="Birthday Candle Gift" />
-
-      <div class="ae-gift-content">
-        <span class="ae-tag">Birthday Candle Gift</span>
-        <h2>More than a candle — an artifact of identity.</h2>
-        <p class="ae-muted">
-          Create a meaningful birthday gift personalized to their date, energy, and signature scent.
-        </p>
-        <button data-show="birthday-section">Create Birthday Gift</button>
-      </div>
-    </div>
-
-    <div id="birthday-section" class="ae-section">
-      <div class="ae-card">
+      <div class="gift-content">
         <h2>Birthday Candle Gift</h2>
-        <p class="ae-muted">
-          A standalone paid gift experience for birthdays, thank-yous, coworkers, clients, hosts, and just-because moments.
-        </p>
-
-        <label>Recipient Name <input id="birth-name" placeholder="Recipient name" /></label>
-
-        <div class="ae-row">
-          <label>Month <input id="birth-month" type="number" min="1" max="12" placeholder="5" /></label>
-          <label>Day <input id="birth-day" type="number" min="1" max="31" placeholder="9" /></label>
-          <label>Year <input id="birth-year" type="number" min="1900" max="2099" placeholder="1990" /></label>
-        </div>
-
-        <button id="birthday-checkout-btn">Create Birthday Gift</button>
-        <div id="birthday-out" class="ae-output">This standalone gift experience unlocks after checkout.</div>
+        <a class="button-link" href="/birthday-gift">Explore Birthday Gift</a>
       </div>
-    </div>
-  </div>
-
-  <script>
-    (function () {
-      const BASE = "https://zodiac-1-gj38.onrender.com";
-
-      function el(id) {
-        return document.getElementById(id);
-      }
-
-      function value(id) {
-        const node = el(id);
-        return node ? node.value.trim() : "";
-      }
-
-      function showSection(id) {
-        document.querySelectorAll("#aura-ember-app .ae-section").forEach(function (section) {
-          section.classList.remove("active");
-        });
-
-        el(id).classList.add("active");
-        el(id).scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-
-      function renderScents(scents) {
-        return (scents || []).map(function (scent) {
-          return '<span class="ae-pill">' + scent + "</span>";
-        }).join("");
-      }
-
-      function setLoading(button, loading, loadingText, normalText) {
-        button.disabled = loading;
-        button.textContent = loading ? loadingText : normalText;
-      }
-
-      function validatePerson(payload) {
-        if (!payload.name) throw new Error("Please enter a name.");
-        if (!payload.birthMonth || payload.birthMonth < 1 || payload.birthMonth > 12) throw new Error("Please enter a valid birth month.");
-        if (!payload.birthDay || payload.birthDay < 1 || payload.birthDay > 31) throw new Error("Please enter a valid birth day.");
-        if (!payload.birthYear || payload.birthYear < 1900 || payload.birthYear > 2099) throw new Error("Please enter a valid birth year.");
-      }
-
-      async function callJson(path, body, extraHeaders) {
-        const res = await fetch(BASE + path, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(extraHeaders || {})
-          },
-          body: JSON.stringify(body)
-        });
-
-        const data = await res.json().catch(function () {
-          return {};
-        });
-
-        if (!res.ok) {
-          throw new Error(data.error || "Request failed with status " + res.status);
-        }
-
-        return data;
-      }
-
-      function savePendingPayload(payload) {
-        localStorage.setItem("flame_pending_payload", JSON.stringify(payload));
-      }
-
-      function fillFullForm(payload) {
-        if (payload.name) el("full-name").value = payload.name;
-        if (payload.birthMonth) el("full-month").value = payload.birthMonth;
-        if (payload.birthDay) el("full-day").value = payload.birthDay;
-        if (payload.birthYear) el("full-year").value = payload.birthYear;
-        if (payload.tarotCard) el("full-tarot").value = payload.tarotCard;
-      }
-
-      function previewUpgradeButton() {
-        return '<button data-show="full-section">Unlock The Full Experience</button>';
-      }
-
-      document.addEventListener("click", function (event) {
-        const button = event.target.closest("[data-show]");
-        if (button) {
-          showSection(button.getAttribute("data-show"));
-          if (button.getAttribute("data-show") === "full-section") {
-            el("focus-selection").classList.add("visible");
-          }
-        }
-
-        const focusBtn = event.target.closest("[data-focus]");
-        if (focusBtn) {
-          selectFocus(focusBtn.getAttribute("data-focus"));
-        }
-      });
-
-      function selectFocus(focusType) {
-        document.querySelectorAll("#aura-ember-app .ae-focus-btn").forEach(function (btn) {
-          btn.classList.remove("active");
-        });
-
-        document.querySelector('[data-focus="' + focusType + '"]').classList.add("active");
-        el("full-experience").value = focusType;
-        el("checkout-form").classList.add("visible");
-        el("checkout-form").scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-
-      document.addEventListener("DOMContentLoaded", function () {
-        const saved = localStorage.getItem("flame_pending_payload");
-
-        if (saved) {
-          try {
-            fillFullForm(JSON.parse(saved));
-          } catch (e) {}
-        }
-
-        localStorage.removeItem("flame_session_id");
-        el("focus-selection").classList.remove("visible");
-        document.querySelectorAll("#aura-ember-app .ae-focus-btn").forEach(function (btn) {
-          btn.classList.remove("active");
-        });
-        el("checkout-form").classList.remove("visible");
-        el("render-card").style.display = "none";
-      });
-
-      el("tarot-preview-btn").addEventListener("click", function () {
-        const c1 = value("tarot-card-1");
-        const c2 = value("tarot-card-2");
-        const c3 = value("tarot-card-3");
-        const c4 = value("tarot-card-4");
-
-        el("tarot-out").innerHTML =
-          '<img class="ae-reveal-img" src="https://sensicandleco.com/wp-content/uploads/2026/05/tarot-default.jpg" alt="Card Reading candle preview" />' +
-          "<h3>The Wanderer Candle Preview</h3>" +
-          "<p><strong>" + c1 + " • " + c2 + " • " + c3 + " • " + c4 + "</strong></p>" +
-          "<p>Your spread points toward movement, reflection, and the courage to step into a new path. This candle preview is designed for seekers, dreamers, and anyone standing at the edge of change.</p>" +
-          "<div>" + renderScents(["Vanilla", "Sandalwood", "Eucalyptus"]) + "</div>" +
-          "<p class='ae-muted'>Ready for more? Unlock the full experience for your complete personalized candle profile.</p>" +
-          previewUpgradeButton();
-      });
-
-      el("zodiac-preview-btn").addEventListener("click", function () {
-        const m = Number(value("zodiac-month"));
-        const d = Number(value("zodiac-day"));
-
-        if (!m || !d) {
-          el("zodiac-out").innerHTML = '<p class="ae-error">Please enter your birth month and day.</p>';
-          return;
-        }
-
-        let sign = "Taurus";
-
-        if ((m === 3 && d >= 21) || (m === 4 && d <= 19)) sign = "Aries";
-        else if ((m === 4 && d >= 20) || (m === 5 && d <= 20)) sign = "Taurus";
-        else if ((m === 5 && d >= 21) || (m === 6 && d <= 20)) sign = "Gemini";
-        else if ((m === 6 && d >= 21) || (m === 7 && d <= 22)) sign = "Cancer";
-        else if ((m === 7 && d >= 23) || (m === 8 && d <= 22)) sign = "Leo";
-        else if ((m === 8 && d >= 23) || (m === 9 && d <= 22)) sign = "Virgo";
-        else if ((m === 9 && d >= 23) || (m === 10 && d <= 22)) sign = "Libra";
-        else if ((m === 10 && d >= 23) || (m === 11 && d <= 21)) sign = "Scorpio";
-        else if ((m === 11 && d >= 22) || (m === 12 && d <= 21)) sign = "Sagittarius";
-        else if ((m === 12 && d >= 22) || (m === 1 && d <= 19)) sign = "Capricorn";
-        else if ((m === 1 && d >= 20) || (m === 2 && d <= 18)) sign = "Aquarius";
-        else if ((m === 2 && d >= 19) || (m === 3 && d <= 20)) sign = "Pisces";
-
-        el("zodiac-out").innerHTML =
-          '<img class="ae-reveal-img" src="https://sensicandleco.com/wp-content/uploads/2026/05/zodiac-taurus.png" alt="Birth Energy candle preview" />' +
-          "<h3>" + sign + " Candle Preview</h3>" +
-          "<p><strong>Aligned • Grounded • Personal</strong></p>" +
-          "<p>Your birth energy preview reflects the rhythm of your sign — a scent direction shaped by identity, nature, and inner timing.</p>" +
-          "<div>" + renderScents(["Eucalyptus", "Vanilla", "Sandalwood"]) + "</div>" +
-          "<p class='ae-muted'>Ready for more? Unlock the full experience for your complete birth-energy candle story.</p>" +
-          previewUpgradeButton();
-      });
-
-      el("aura-preview-btn").addEventListener("click", function () {
-        const energy = value("aura-energy");
-
-        el("aura-out").innerHTML =
-          '<img class="ae-reveal-img" src="https://sensicandleco.com/wp-content/uploads/2026/05/aura-emerald.jpg" alt="Aura Energy candle preview" />' +
-          "<h3>Aura " + energy + " Preview</h3>" +
-          "<p><strong>Energy selected: " + energy + "</strong></p>" +
-          "<p>Your aura preview reflects the energy you are calling in. This candle direction is designed to help you center, elevate, and return to your chosen frequency.</p>" +
-          "<div>" + renderScents(["Lavender", "Vanilla", "Sandalwood"]) + "</div>" +
-          "<p class='ae-muted'>Ready for more? Unlock the full experience to turn this aura direction into a complete personalized candle profile.</p>" +
-          previewUpgradeButton();
-      });
-
-      async function startCheckout(payload, button, normalText) {
-        validatePerson(payload);
-        savePendingPayload(payload);
-        fillFullForm(payload);
-
-        setLoading(button, true, "Opening Checkout...", normalText);
-
-        try {
-          const data = await callJson("/api/create-checkout", {
-            productType: payload.experience || "full_artifact"
-          });
-
-          if (!data.url) {
-            throw new Error("No checkout URL returned.");
-          }
-
-          window.location.href = data.url;
-        } catch (err) {
-          alert(err.message);
-          setLoading(button, false, "Opening Checkout...", normalText);
-        }
-      }
-
-      el("birthday-checkout-btn").addEventListener("click", async function () {
-        const button = el("birthday-checkout-btn");
-
-        const payload = {
-          name: value("birth-name"),
-          birthMonth: Number(value("birth-month")),
-          birthDay: Number(value("birth-day")),
-          birthYear: Number(value("birth-year")),
-          tarotCard: "wanderer",
-          experience: "full_artifact"
-        };
-
-        await startCheckout(payload, button, "Create Birthday Gift");
-      });
-
-      el("checkout-btn").addEventListener("click", async function () {
-        const button = el("checkout-btn");
-
-        const payload = {
-          name: value("full-name"),
-          birthMonth: Number(value("full-month")),
-          birthDay: Number(value("full-day")),
-          birthYear: Number(value("full-year")),
-          taratCard: value("full-tarot"),
-          experience: value("full-experience")
-        };
-
-        await startCheckout(payload, button, "Unlock Full Experience");
-      });
-
-      el("render-btn").addEventListener("click", async function () {
-        const button = el("render-btn");
-        setLoading(button, true, "Rendering...", "Render My Artifact");
-        el("render-out").textContent = "Loading...";
-
-        try {
-          const sessionId = localStorage.getItem("flame_session_id");
-
-          if (!sessionId) {
-            throw new Error("No payment session found. Please complete checkout first.");
-          }
-
-          let payload = {
-            name: value("full-name"),
-            birthMonth: Number(value("full-month")),
-            birthDay: Number(value("full-day")),
-            birthYear: Number(value("full-year")),
-            tarotCard: value("full-tarot"),
-            experience: value("full-experience")
-          };
-
-          const saved = localStorage.getItem("flame_pending_payload");
-
-          if ((!payload.name || !payload.birthMonth) && saved) {
-            payload = JSON.parse(saved);
-          }
-
-          validatePerson(payload);
-
-          const data = await callJson(
-            "/api/render-flame",
-            payload,
-            { "x-flame-session-id": sessionId }
-          );
-
-          if (data.mockupImage) {
-            el("mockup-image").src = data.mockupImage;
-            el("mockup-image").style.display = "block";
-          }
-
-          el("render-out").innerHTML =
-            "<h3>" + (data.artifactTitle || "Your Aura & Ember Artifact") + "</h3>" +
-            "<p><strong>" + (data.identityLine || "") + "</strong></p>" +
-            "<p>" + (data.poeticReading || "") + "</p>" +
-            "<div>" + renderScents(data.scentProfile) + "</div>" +
-            "<h3>" + ((data.aura && data.aura.title) || "Aura") + "</h3>" +
-            "<p>" + ((data.aura && data.aura.body) || "") + "</p>" +
-            "<h3>" + ((data.ember && data.ember.title) || "Ember") + "</h3>" +
-            "<p>" + ((data.ember && data.ember.body) || "") + "</p>" +
-            "<h3>" + ((data.arcana && data.arcana.title) || "Arcana") + "</h3>" +
-            "<p>" + ((data.arcana && data.arcana.body) || "") + "</p>" +
-            '<p class="ae-success">Your full artifact has been rendered.</p>';
-        } catch (err) {
-          el("render-out").innerHTML = '<p class="ae-error">' + err.message + "</p>";
-        } finally {
-          setLoading(button, false, "Rendering...", "Render My Artifact");
-        }
-      });
-    })();
-  </script>
-</div>
+    </section>
+  </main>
+</body>
+</html>
