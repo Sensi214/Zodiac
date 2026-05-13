@@ -12,10 +12,10 @@
 <div class="card"><label>Card 4: Candle Guidance<select id="c4"><option>The Wanderer</option><option>The Hearth</option><option>The Anchor</option><option>The Bloom</option></select></label></div>
 </div>
 <div class="buttons"><button class="btn" id="reveal">Reveal Candle Outcome</button><a class="btn" href="/landing-page.html">Back</a></div>
-<section id="out" class="card out"><h2 id="title"></h2><p id="reading" style="color:var(--muted)"></p><p><strong>Scent Profile:</strong> <span id="scent"></span></p><img src="https://sensicandleco.com/wp-content/uploads/2026/05/tarot-default.jpg" alt="Candle"/><div class="buttons"><a class="btn" href="/full-experience/">Upgrade to Full Experience</a><a class="btn" href="/your-artifact-page/">Back to Artifact Page</a></div></section>
+<section id="out" class="card out"><h2 id="title"></h2><p id="reading" style="color:var(--muted)"></p><p><strong>Scent Profile:</strong> <span id="scent"></span></p><img src="https://sensicandleco.com/wp-content/uploads/2026/05/tarot-default.jpg" alt="Candle"/><div class="buttons"><a class="btn" href="/full-experience.html">Upgrade to Full Experience</a><a class="btn" href="/landing-page.html">Back to Artifact Page</a></div></section>
 </main>
 <script>
 const outcomes={"The Wanderer":{title:"Wanderer Candle",reading:"A doorway opens where courage meets curiosity. Your path moves when you trust your first step.",scent:"Citrus • Cedar • Soft Musk"},"The Hearth":{title:"Hearth Candle",reading:"Warmth gathers around your name. Build slowly and everything meaningful will stay lit.",scent:"Vanilla • Sandalwood • Cinnamon"},"The Anchor":{title:"Anchor Candle",reading:"You are meant to root before you rise. Stability now creates freedom later.",scent:"Amber • Eucalyptus • Cedar"},"The Bloom":{title:"Bloom Candle",reading:"Your season is unfolding in color. Let gentleness lead your next expansion.",scent:"Lavender • Orange • Soft Rose"}};
-document.getElementById('reveal').onclick=()=>{const key=document.getElementById('c4').value;const o=outcomes[key];title.textContent=o.title;reading.textContent=o.reading;scent.textContent=o.scent;out.classList.add('show');};
+document.getElementById('reveal').onclick=()=>{const key=document.getElementById('c4').value;const o=outcomes[key];document.getElementById('title').textContent=o.title;document.getElementById('reading').textContent=o.reading;document.getElementById('scent').textContent=o.scent;document.getElementById('out').classList.add('show');};
 </script>
 </body></html>
