@@ -92,7 +92,7 @@ function buildPrompts({ ritualType, userProfile, tarotSelected }) {
       ? `Luxury product photography of a premium matte black glass candle jar with no lid. White soy wax and one cotton wick. A single elegant gold-leaf label on the front reads "SOLAR RETURN: ${zodiac}". The label includes a radiant sunburst mandala. Dark obsidian background, warm golden glow, celestial birthday ritual aesthetic, high-end ecommerce candle photography, realistic, sharp focus.`
       : `Luxury product photography of a premium matte black glass candle jar with no lid. White soy wax and one cotton wick. Dual gold labels: front label reads "AURA: ${zodiac}" with small gold stars, secondary reflected label shows a gold mandala sigil with the year "${userProfile.year}". Dark marble background, warm golden glow, celestial manifestation aesthetic, high-end ecommerce candle photography, realistic, sharp focus.`;
 
- const prompt = `
+const prompt = `
 Create a luxury spiritual candle reading.
 
 Allowed fragrance notes ONLY:
@@ -223,7 +223,7 @@ app.post("/api/manifest-final", async (req, res) => {
         signature: "A flame written in your stars.",
         aura_desc: `${zodiac} carries the aura of this ritual.`,
         ember_desc: `Your year ${userProfile.year} anchors the ember of your path.`,
-        fragrance_notes: "VANILLA, SANDALWOOD, AMBER",
+        (info.fragrance_notes || "VANILLA, SANDALWOOD, ORANGE")
         horoscope: "Your energy is entering a moment of alignment, release, and renewed intention.",
         insight: "Trust the flame that keeps returning.",
         product_summary: "A personalized ritual candle created from your birth energy and tarot path."
