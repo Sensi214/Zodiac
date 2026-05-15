@@ -2,13 +2,24 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import Stripe from "stripe";
+import OpenAI from "openai";
 
-import { generateArtifactCopy } from "./lib/openaiClient.js";
-import { markSessionPaid, isSessionPaid, isSessionUsed, markSessionUsed } from "./lib/tokenStore.js";
-import { auraMap, tarotMap, getZodiac, getYearAnimal, getArrival } from "./lib/flameData.js";
+import {
+  markSessionPaid,
+  isSessionPaid,
+  isSessionUsed,
+  markSessionUsed
+} from "./lib/tokenStore.js";
 
-const requiredEnv = ["STRIPE_SECRET_KEY", "OPENAI_API_KEY", "WORDPRESS_URL"];
+const requiredEnv = [
+  "STRIPE_SECRET_KEY",
+  "STRIPE_AURA_EMBER_PRICE_ID",
+  "OPENAI_API_KEY",
+  "WORDPRESS_URL"
+];
+
 const missingEnv = requiredEnv.filter((key) => !process.env[key]);
+
 if (missingEnv.length) {
   console.error(`Missing required environment variables: ${missingEnv.join(", ")}`);
   process.exit(1);
@@ -16,267 +27,259 @@ if (missingEnv.length) {
 
 const app = express();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
 const allowedOrigin = process.env.WORDPRESS_URL;
-const configuredBaseUrl = process.env.BASE_URL || null;
-const requestBuckets = new Map();
-const analytics = {
-  miniReadingRequests: 0,
-  birthdayOfferRequests: 0,
-  renderFlameRequests: 0,
-  renderFlamePaid: 0,
-  checkoutByType: { full_artifact: 0, mini_reading: 0 }
-};
-
-const tarotAliases = {
-  wanderer: "fool",
-  sun: "fool",
-  star: "fool",
-  moon: "fool",
-  world: "fool"
-};
-
-function normalizeTarotCard(input) {
-  if (typeof input !== "string") return input;
-  const normalized = input.trim().toLowerCase();
-  return tarotMap[normalized] ? normalized : (tarotAliases[normalized] || normalized);
-}
-
-function rateLimit(req, res, next) {
-  const ip = req.ip || req.headers["x-forwarded-for"] || "unknown";
-  const now = Date.now();
-  const windowMs = 60 * 1000;
-  const limit = 30;
-  const bucket = requestBuckets.get(ip) || { count: 0, start: now };
-
-  if (now - bucket.start > windowMs) {
-    bucket.count = 0;
-    bucket.start = now;
-  }
-
-  bucket.count += 1;
-  requestBuckets.set(ip, bucket);
-
-  if (bucket.count > limit) {
-    return res.status(429).json({ error: "Too many requests. Please wait a minute and try again." });
-  }
-
-  return next();
-}
+const baseUrl = process.env.BASE_URL || "";
+const port = Number(process.env.PORT || 10000);
 
 app.use("/webhook", express.raw({ type: "application/json" }));
-app.use(express.json());
+app.use(express.json({ limit: "25mb" }));
 app.use(cors({ origin: allowedOrigin, methods: ["GET", "POST"] }));
-app.use(express.static("public"));
-app.use("/mockups", express.static("mockups"));
-app.use(rateLimit);
 
-function validateDate(birthMonth, birthDay, birthYear) {
-  const d = new Date(birthYear, birthMonth - 1, birthDay);
-  return d.getFullYear() === birthYear && d.getMonth() === birthMonth - 1 && d.getDate() === birthDay;
+app.get("/health", (_req, res) => {
+  res.json({ ok: true, service: "Aura & Ember Backend" });
+});
+
+function getZodiac(month, day) {
+  const m = Number(month);
+  const d = Number(day);
+
+  if ((m === 1 && d >= 20) || (m === 2 && d <= 18)) return "Aquarius";
+  if ((m === 2 && d >= 19) || (m === 3 && d <= 20)) return "Pisces";
+  if ((m === 3 && d >= 21) || (m === 4 && d <= 19)) return "Aries";
+  if ((m === 4 && d >= 20) || (m === 5 && d <= 20)) return "Taurus";
+  if ((m === 5 && d >= 21) || (m === 6 && d <= 20)) return "Gemini";
+  if ((m === 6 && d >= 21) || (m === 7 && d <= 22)) return "Cancer";
+  if ((m === 7 && d >= 23) || (m === 8 && d <= 22)) return "Leo";
+  if ((m === 8 && d >= 23) || (m === 9 && d <= 22)) return "Virgo";
+  if ((m === 9 && d >= 23) || (m === 10 && d <= 22)) return "Libra";
+  if ((m === 10 && d >= 23) || (m === 11 && d <= 21)) return "Scorpio";
+  if ((m === 11 && d >= 22) || (m === 12 && d <= 21)) return "Sagittarius";
+  if ((m === 12 && d >= 22) || (m === 1 && d <= 19)) return "Capricorn";
+
+  return "Aries";
 }
 
-function validatePayload(body) {
-  const { name, birthMonth, birthDay, birthYear, experience } = body;
-  const tarotCard = normalizeTarotCard(body?.tarotCard);
+function validateManifestPayload(body) {
+  const { ritualType, userProfile, tarotSelected } = body || {};
 
-  if (!name || typeof name !== "string") return "Invalid name.";
-  if (!Number.isInteger(birthMonth) || birthMonth < 1 || birthMonth > 12) return "Invalid month.";
-  if (!Number.isInteger(birthDay) || birthDay < 1 || birthDay > 31) return "Invalid day.";
-  if (!Number.isInteger(birthYear) || birthYear < 1900 || birthYear > 2099) return "Invalid year.";
-  if (!["aura", "zodiac", "tarot", "full_artifact"].includes(experience)) return "Invalid experience.";
-  if (!tarotMap[tarotCard]) return "Invalid tarot card.";
-  if (!validateDate(birthMonth, birthDay, birthYear)) return "Invalid date.";
+  if (!["standard", "birthday"].includes(ritualType)) {
+    return "Invalid ritual type.";
+  }
+
+  if (!userProfile || typeof userProfile !== "object") {
+    return "Missing user profile.";
+  }
+
+  const month = Number(userProfile.month);
+  const day = Number(userProfile.day);
+  const year = Number(userProfile.year);
+
+  if (!month || month < 1 || month > 12) return "Invalid birth month.";
+  if (!day || day < 1 || day > 31) return "Invalid birth day.";
+  if (!year || year < 1900 || year > 2099) return "Invalid birth year.";
+  if (!Array.isArray(tarotSelected) || tarotSelected.length < 1) return "Missing tarot cards.";
 
   return null;
 }
 
-function getBaseUrl(req) {
-  return configuredBaseUrl || `${req.protocol}://${req.get("host")}`;
+function buildPrompts({ ritualType, userProfile, tarotSelected }) {
+  const zodiac = userProfile.zodiac || getZodiac(userProfile.month, userProfile.day);
+
+  const imagePrompt =
+    ritualType === "birthday"
+      ? `Luxury product photography of a premium matte black glass candle jar with no lid. White soy wax and one cotton wick. A single elegant gold-leaf label on the front reads "SOLAR RETURN: ${zodiac}". The label includes a radiant sunburst mandala. Dark obsidian background, warm golden glow, celestial birthday ritual aesthetic, high-end ecommerce candle photography, realistic, sharp focus.`
+      : `Luxury product photography of a premium matte black glass candle jar with no lid. White soy wax and one cotton wick. Dual gold labels: front label reads "AURA: ${zodiac}" with small gold stars, secondary reflected label shows a gold mandala sigil with the year "${userProfile.year}". Dark marble background, warm golden glow, celestial manifestation aesthetic, high-end ecommerce candle photography, realistic, sharp focus.`;
+
+ const prompt = `
+Create a luxury spiritual candle reading.
+
+Allowed fragrance notes ONLY:
+Mango, Cinnamon, Lavender, Eucalyptus, Lemon, Grapefruit, Orange, Vanilla, Sandalwood.
+
+Choose EXACTLY 3 fragrance notes from that list.
+
+Return JSON:
+{
+  "candle_name": "",
+  "meaning": "",
+  "signature": "",
+  "aura_desc": "",
+  "ember_desc": "",
+  "fragrance_notes": "",
+  "horoscope": "",
+  "insight": ""
 }
+`;
 
-function getMockup(experience, req) {
-  const base = getBaseUrl(req);
-  if (experience === "aura") return `${base}/mockups/aura-emerald.jpg`;
-  if (experience === "zodiac") return `${base}/mockups/zodiac-taurus.jpg`;
-  if (experience === "tarot") return `${base}/mockups/tarot-default.jpg`;
-  return `${base}/mockups/full-artifact.jpg`;
+Ritual type: ${ritualType}
+Birth date: ${userProfile.month}/${userProfile.day}/${userProfile.year}
+Zodiac: ${zodiac}
+Tarot cards drawn: ${tarotSelected.join(", ")}
+
+Return valid JSON only. No markdown.
+
+Schema:
+{
+  "candle_name": "Unique luxury candle name",
+  "meaning": "A 3 sentence mystical reading blending birth energy and tarot guidance.",
+  "signature": "A short poetic signature line.",
+  "aura_desc": "A short explanation of the customer's zodiac/birth energy.",
+  "ember_desc": "A short explanation of the birth year, rebirth theme, or ritual theme.",
+  "fragrance_notes": "NOTE 1, NOTE 2, NOTE 3",
+  "horoscope": "A mystical personal horoscope for this ritual moment.",
+  "insight": "One short cosmic advice line.",
+  "product_summary": "A short ecommerce-friendly summary of what this candle represents."
 }
+`;
 
-app.get("/api/meta", (_req, res) => {
-  return res.json({ experiences: ["aura", "zodiac", "tarot", "full_artifact"], tarotCards: Object.keys(tarotMap) });
-});
-
-app.get("/health", (_req, res) => res.json({ ok: true }));
-
-app.get("/api/admin/analytics", (req, res) => {
-  if (req.query.key !== process.env.ADMIN_ANALYTICS_KEY) {
-    return res.status(403).json({ error: "Forbidden" });
-  }
-  return res.json({ ...analytics, timestamp: new Date().toISOString() });
-});
-
-app.post("/api/mockup-preview", (req, res) => {
-  const validationError = validatePayload({ ...req.body, experience: "full_artifact" });
-  if (validationError) return res.status(400).json({ error: validationError });
-
-  const { name, birthMonth, birthDay, birthYear } = req.body;
-  const tarotCard = normalizeTarotCard(req.body?.tarotCard);
-  const aura = auraMap[birthMonth];
-  const zodiac = getZodiac(birthMonth, birthDay);
-  const animal = getYearAnimal(birthYear);
-  const tarot = tarotMap[tarotCard];
-
-  return res.json({
-    name,
-    mockupImage: `${getBaseUrl(req)}/mockups/full-artifact.jpg`,
-    previewTitle: `${aura.title} Preview Candle`,
-    previewLine: `${zodiac.sign} alignment with ${tarot.title}`,
-    scentProfile: [aura.scent[0], zodiac.scent[1], tarot.scent[2]],
-    upgradeMessage: "Buy now and unlock your upgraded personal card-selected reading tomorrow at no extra cost.",
-    vibeTags: [zodiac.sign, animal, tarotCard]
-  });
-});
-
-app.post("/api/birthday-candle-offer", (req, res) => {
-  analytics.birthdayOfferRequests += 1;
-  const { recipientName, birthMonth, birthDay, birthYear } = req.body || {};
-  const tarotCard = normalizeTarotCard(req.body?.tarotCard);
-  const validationError = validatePayload({ name: recipientName, birthMonth, birthDay, birthYear, experience: "full_artifact", tarotCard });
-  if (validationError) return res.status(400).json({ error: validationError });
-
-  const aura = auraMap[birthMonth];
-  const zodiac = getZodiac(birthMonth, birthDay);
-  const animal = getYearAnimal(birthYear);
-
-  return res.json({
-    product: "birthday_candle",
-    includedInMainFlow: true,
-    recipientName,
-    birthday: getArrival(birthMonth, birthDay, birthYear),
-    candle: {
-      title: `${zodiac.sign} Birthday Candle`,
-      identity: `${aura.title} • ${zodiac.sign} • ${animal}`,
-      scentProfile: [aura.scent[0], zodiac.scent[1], "Vanilla"]
-    }
-  });
-});
-
-app.post("/api/mini-reading-sale", async (req, res) => {
-  analytics.miniReadingRequests += 1;
-  const { name, birthMonth, birthDay, birthYear } = req.body || {};
-  const tarotCard = normalizeTarotCard(req.body?.tarotCard);
-  const validationError = validatePayload({ name, birthMonth, birthDay, birthYear, experience: "tarot", tarotCard });
-  if (validationError) return res.status(400).json({ error: validationError });
-
-  const aura = auraMap[birthMonth];
-  const zodiac = getZodiac(birthMonth, birthDay);
-  const animal = getYearAnimal(birthYear);
-  const tarot = tarotMap[tarotCard];
-  const scentProfile = [aura.scent[0], zodiac.scent[1], tarot.scent[2]];
-
-  try {
-    const copy = await generateArtifactCopy({ name, birthMonth, birthDay, birthYear, experience: "tarot", aura, zodiac, animal, tarot, scentProfile });
-
-    return res.json({
-      product: "mini_card_reading_sale",
-      priceSuggestionCents: Number(process.env.MINI_READING_PRICE_CENTS || 700),
-      reading: { card: tarot.title, summary: copy.poeticReading, identityLine: copy.identityLine },
-      suggestedCandle: { title: copy.artifactTitle, scentProfile, aura: copy.auraBody, ember: copy.emberBody, arcana: copy.arcanaBody }
-    });
-  } catch {
-    return res.status(500).json({ error: "Mini reading generation failed." });
-  }
-});
+  return { imagePrompt, textPrompt, zodiac };
+}
 
 app.post("/api/create-checkout", async (req, res) => {
-  const productType = req.body?.productType || "full_artifact";
-  const fullPriceId = process.env.STRIPE_FULL_ARTIFACT_PRICE_ID;
-  const miniPriceId = process.env.STRIPE_MINI_READING_PRICE_ID;
-
   try {
-    const lineItems =
-      productType === "mini_reading"
-        ? [{ price: miniPriceId, quantity: 1 }]
-        : [{ price: fullPriceId, quantity: 1 }];
+    const validationError = validateManifestPayload(req.body);
 
-    if (!lineItems[0].price) {
-      return res.status(400).json({ error: `Missing Stripe price ID for ${productType}.` });
+    if (validationError) {
+      return res.status(400).json({ error: validationError });
     }
 
-    analytics.checkoutByType[productType] = (analytics.checkoutByType[productType] || 0) + 1;
+    const { ritualType, userProfile, tarotSelected } = req.body;
+    const zodiac = userProfile.zodiac || getZodiac(userProfile.month, userProfile.day);
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      line_items: lineItems,
-      success_url: `https://sensicandleco.com/aura-ember-artifact/?session_id={CHECKOUT_SESSION_ID}`,
+      line_items: [
+        {
+          price: process.env.STRIPE_AURA_EMBER_PRICE_ID,
+          quantity: 1
+        }
+      ],
+      success_url: `${process.env.WORDPRESS_URL}/aura-ember-artifact/?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.WORDPRESS_URL}/aura-ember-artifact/`,
       allow_promotion_codes: true,
-      metadata: { productType }
+      metadata: {
+        ritualType,
+        zodiac,
+        birthMonth: String(userProfile.month),
+        birthDay: String(userProfile.day),
+        birthYear: String(userProfile.year),
+        tarotCards: tarotSelected.join(", ")
+      }
     });
 
     return res.json({ url: session.url });
-  } catch {
+  } catch (error) {
+    console.error("create-checkout error:", error);
     return res.status(500).json({ error: "Could not create checkout session." });
+  }
+});
+
+app.post("/api/manifest-final", async (req, res) => {
+  try {
+    const sessionId = req.headers["x-aura-session-id"] || req.body?.sessionId;
+
+    if (!sessionId) {
+      return res.status(403).json({ error: "Missing paid session." });
+    }
+
+    if (!isSessionPaid(sessionId)) {
+      return res.status(403).json({ error: "Payment required." });
+    }
+
+    if (isSessionUsed(sessionId)) {
+      return res.status(403).json({ error: "This paid manifestation has already been used." });
+    }
+
+    const validationError = validateManifestPayload(req.body);
+
+    if (validationError) {
+      return res.status(400).json({ error: validationError });
+    }
+
+    markSessionUsed(sessionId);
+
+    const { ritualType, userProfile, tarotSelected } = req.body;
+    const { imagePrompt, textPrompt, zodiac } = buildPrompts({
+      ritualType,
+      userProfile,
+      tarotSelected
+    });
+
+    const textResult = await openai.responses.create({
+      model: "gpt-4.1-mini",
+      input: textPrompt
+    });
+
+    let info;
+
+    try {
+      info = JSON.parse(textResult.output_text);
+    } catch {
+      info = {
+        candle_name: "The Celestial Ember Candle",
+        meaning: textResult.output_text || "Your candle has been revealed through your birth energy and chosen cards.",
+        signature: "A flame written in your stars.",
+        aura_desc: `${zodiac} carries the aura of this ritual.`,
+        ember_desc: `Your year ${userProfile.year} anchors the ember of your path.`,
+        fragrance_notes: "VANILLA, SANDALWOOD, AMBER",
+        horoscope: "Your energy is entering a moment of alignment, release, and renewed intention.",
+        insight: "Trust the flame that keeps returning.",
+        product_summary: "A personalized ritual candle created from your birth energy and tarot path."
+      };
+    }
+
+    const imageResult = await openai.images.generate({
+      model: "gpt-image-1",
+      prompt: imagePrompt,
+      size: "1024x1024"
+    });
+
+    const imageBase64 = imageResult?.data?.[0]?.b64_json;
+
+    if (!imageBase64) {
+      return res.status(500).json({ error: "Image generation failed." });
+    }
+
+    return res.json({
+      paid: true,
+      sessionId,
+      zodiac,
+      ritualType,
+      imageUrl: `data:image/png;base64,${imageBase64}`,
+      info
+    });
+  } catch (error) {
+    console.error("manifest-final error:", error);
+    return res.status(500).json({ error: "Manifestation failed." });
   }
 });
 
 app.post("/webhook", (req, res) => {
   if (!process.env.STRIPE_WEBHOOK_SECRET) {
-    return res.status(503).json({ error: "Webhook secret not configured." });
-  }
-  try {
-    const event = stripe.webhooks.constructEvent(req.body, req.headers["stripe-signature"], process.env.STRIPE_WEBHOOK_SECRET);
-    if (event.type === "checkout.session.completed") markSessionPaid(event.data.object.id);
     return res.sendStatus(200);
-  } catch {
+  }
+
+  try {
+    const event = stripe.webhooks.constructEvent(
+      req.body,
+      req.headers["stripe-signature"],
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+
+    if (event.type === "checkout.session.completed") {
+      markSessionPaid(event.data.object.id);
+    }
+
+    return res.sendStatus(200);
+  } catch (error) {
+    console.error("webhook error:", error.message);
     return res.sendStatus(400);
   }
 });
 
-app.post("/api/render-flame", async (req, res) => {
-  analytics.renderFlameRequests += 1;
-  try {
-    const normalizedBody = { ...req.body, tarotCard: normalizeTarotCard(req.body?.tarotCard) };
-    const validationError = validatePayload(normalizedBody);
-    if (validationError) return res.status(400).json({ error: validationError });
-
-    const sessionId = req.headers["x-flame-session-id"];
-    if (!sessionId || !isSessionPaid(sessionId)) return res.status(403).json({ error: "Payment required." });
-    if (isSessionUsed(sessionId)) return res.status(403).json({ error: "This paid render has already been used." });
-
-    analytics.renderFlamePaid += 1;
-    markSessionUsed(sessionId);
-
-    const { name, birthMonth, birthDay, birthYear, experience } = normalizedBody;
-    const tarotCard = normalizedBody.tarotCard;
-    const aura = auraMap[birthMonth];
-    const zodiac = getZodiac(birthMonth, birthDay);
-    const animal = getYearAnimal(birthYear);
-    const tarot = tarotMap[tarotCard];
-
-    const scentProfile =
-      experience === "aura" ? aura.scent :
-      experience === "zodiac" ? zodiac.scent :
-      experience === "tarot" ? tarot.scent :
-      [aura.scent[0], zodiac.scent[1], tarot.scent[2]];
-
-    const copy = await generateArtifactCopy({ name, birthMonth, birthDay, birthYear, experience, aura, zodiac, animal, tarot, scentProfile });
-
-    return res.json({
-      mockupImage: getMockup(experience, req),
-      arrival: getArrival(birthMonth, birthDay, birthYear),
-      artifactTitle: copy.artifactTitle,
-      identityLine: copy.identityLine,
-      poeticReading: copy.poeticReading,
-      scentProfile,
-      aura: { title: aura.title, body: copy.auraBody },
-      ember: { title: copy.emberTitle || `Year of the ${animal}`, body: copy.emberBody },
-      arcana: { title: copy.arcanaTitle || tarot.title, body: copy.arcanaBody }
-    });
-  } catch {
-    return res.status(500).json({ error: "Render failed." });
-  }
+app.listen(port, () => {
+  console.log(`Aura & Ember backend running on ${port}`);
+  console.log(`Base URL: ${baseUrl}`);
 });
-
-const port = Number(process.env.PORT || 3000);
-app.listen(port, () => console.log(`Running on ${port}`));
