@@ -118,6 +118,11 @@ Birth date: ${userProfile.month}/${userProfile.day}/${userProfile.year}
 Zodiac: ${zodiac}
 Tarot cards drawn: ${tarotSelected.join(", ")}
 
+Allowed fragrance notes ONLY:
+Mango, Cinnamon, Lavender, Eucalyptus, Lemon, Grapefruit, Orange, Vanilla, Sandalwood.
+
+Choose EXACTLY 3 fragrance notes from that list.
+
 Return valid JSON only. No markdown.
 
 Schema:
@@ -127,7 +132,7 @@ Schema:
   "signature": "A short poetic signature line.",
   "aura_desc": "A short explanation of the customer's zodiac/birth energy.",
   "ember_desc": "A short explanation of the birth year, rebirth theme, or ritual theme.",
-  "fragrance_notes": "NOTE 1, NOTE 2, NOTE 3",
+  "fragrance_notes": "Exactly 3 notes from the allowed list, formatted like Vanilla, Sandalwood, Orange",
   "horoscope": "A mystical personal horoscope for this ritual moment.",
   "insight": "One short cosmic advice line.",
   "product_summary": "A short ecommerce-friendly summary of what this candle represents."
