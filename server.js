@@ -164,7 +164,8 @@ app.post("/api/mini-reading-sale", async (req, res) => {
       reading: { card: tarot.title, summary: copy.poeticReading, identityLine: copy.identityLine },
       suggestedCandle: { title: copy.artifactTitle, scentProfile, aura: copy.auraBody, ember: copy.emberBody, arcana: copy.arcanaBody }
     });
-  } catch {
+  } catch (err) {
+    console.error("mini-reading-sale error:", err);
     return res.status(500).json({ error: "Mini reading generation failed." });
   }
 });
@@ -195,7 +196,8 @@ app.post("/api/create-checkout", async (req, res) => {
     });
 
     return res.json({ url: session.url });
-  } catch {
+  } catch (err) {
+    console.error("create-checkout error:", err);
     return res.status(500).json({ error: "Could not create checkout session." });
   }
   return res.json({ ...analytics, timestamp: new Date().toISOString() });
@@ -209,7 +211,8 @@ app.post("/webhook", (req, res) => {
     const event = stripe.webhooks.constructEvent(req.body, req.headers["stripe-signature"], process.env.STRIPE_WEBHOOK_SECRET);
     if (event.type === "checkout.session.completed") markSessionPaid(event.data.object.id);
     return res.sendStatus(200);
-  } catch {
+  } catch (err) {
+    console.error("webhook verification error:", err);
     return res.sendStatus(400);
   }
 });
@@ -234,9 +237,10 @@ app.post("/api/render-flame", async (req, res) => {
     const tarot = tarotMap[tarotCard];
 
     const scentProfile =
-      readingType === "aura" ? aura.scent :
-      readingType === "zodiac" ? zodiac.scent :
-      tarot.scent;
+      experience === "aura" ? aura.scent :
+      experience === "zodiac" ? zodiac.scent :
+      experience === "tarot" ? tarot.scent :
+      [aura.scent[0], zodiac.scent[1], tarot.scent[2]];
 
     const copy = await generateArtifactCopy({ name, birthMonth, birthDay, birthYear, experience, aura, zodiac, animal, tarot, scentProfile });
 
@@ -251,7 +255,8 @@ app.post("/api/render-flame", async (req, res) => {
       ember: { title: copy.emberTitle || `Year of the ${animal}`, body: copy.emberBody },
       arcana: { title: copy.arcanaTitle || tarot.title, body: copy.arcanaBody }
     });
-  } catch {
+  } catch (err) {
+    console.error("render-flame error:", err);
     return res.status(500).json({ error: "Render failed." });
   }
 });
