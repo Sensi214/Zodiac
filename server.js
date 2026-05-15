@@ -27,6 +27,20 @@ const analytics = {
   checkoutByType: { full_artifact: 0, mini_reading: 0 }
 };
 
+const tarotAliases = {
+  wanderer: "fool",
+  sun: "fool",
+  star: "fool",
+  moon: "fool",
+  world: "fool"
+};
+
+function normalizeTarotCard(input) {
+  if (typeof input !== "string") return input;
+  const normalized = input.trim().toLowerCase();
+  return tarotMap[normalized] ? normalized : (tarotAliases[normalized] || normalized);
+}
+
 function rateLimit(req, res, next) {
   const ip = req.ip || req.headers["x-forwarded-for"] || "unknown";
   const now = Date.now();
@@ -62,7 +76,9 @@ function validateDate(birthMonth, birthDay, birthYear) {
 }
 
 function validatePayload(body) {
-  const { name, birthMonth, birthDay, birthYear, experience, tarotCard } = body;
+  const { name, birthMonth, birthDay, birthYear, experience } = body;
+  const tarotCard = normalizeTarotCard(body?.tarotCard);
+
   if (!name || typeof name !== "string") return "Invalid name.";
   if (!Number.isInteger(birthMonth) || birthMonth < 1 || birthMonth > 12) return "Invalid month.";
   if (!Number.isInteger(birthDay) || birthDay < 1 || birthDay > 31) return "Invalid day.";
@@ -103,7 +119,8 @@ app.post("/api/mockup-preview", (req, res) => {
   const validationError = validatePayload({ ...req.body, experience: "full_artifact" });
   if (validationError) return res.status(400).json({ error: validationError });
 
-  const { name, birthMonth, birthDay, birthYear, tarotCard } = req.body;
+  const { name, birthMonth, birthDay, birthYear } = req.body;
+  const tarotCard = normalizeTarotCard(req.body?.tarotCard);
   const aura = auraMap[birthMonth];
   const zodiac = getZodiac(birthMonth, birthDay);
   const animal = getYearAnimal(birthYear);
@@ -122,7 +139,8 @@ app.post("/api/mockup-preview", (req, res) => {
 
 app.post("/api/birthday-candle-offer", (req, res) => {
   analytics.birthdayOfferRequests += 1;
-  const { recipientName, birthMonth, birthDay, birthYear, tarotCard } = req.body || {};
+  const { recipientName, birthMonth, birthDay, birthYear } = req.body || {};
+  const tarotCard = normalizeTarotCard(req.body?.tarotCard);
   const validationError = validatePayload({ name: recipientName, birthMonth, birthDay, birthYear, experience: "full_artifact", tarotCard });
   if (validationError) return res.status(400).json({ error: validationError });
 
@@ -145,7 +163,8 @@ app.post("/api/birthday-candle-offer", (req, res) => {
 
 app.post("/api/mini-reading-sale", async (req, res) => {
   analytics.miniReadingRequests += 1;
-  const { name, birthMonth, birthDay, birthYear, tarotCard } = req.body || {};
+  const { name, birthMonth, birthDay, birthYear } = req.body || {};
+  const tarotCard = normalizeTarotCard(req.body?.tarotCard);
   const validationError = validatePayload({ name, birthMonth, birthDay, birthYear, experience: "tarot", tarotCard });
   if (validationError) return res.status(400).json({ error: validationError });
 
@@ -164,8 +183,7 @@ app.post("/api/mini-reading-sale", async (req, res) => {
       reading: { card: tarot.title, summary: copy.poeticReading, identityLine: copy.identityLine },
       suggestedCandle: { title: copy.artifactTitle, scentProfile, aura: copy.auraBody, ember: copy.emberBody, arcana: copy.arcanaBody }
     });
-  } catch (err) {
-    console.error("mini-reading-sale error:", err);
+  } catch {
     return res.status(500).json({ error: "Mini reading generation failed." });
   }
 });
@@ -187,22 +205,19 @@ app.post("/api/create-checkout", async (req, res) => {
 
     analytics.checkoutByType[productType] = (analytics.checkoutByType[productType] || 0) + 1;
 
-const session = await stripe.checkout.sessions.create({
-  mode: "payment",
-  line_items: lineItems,
-  allow_promotion_codes: true,
-  success_url: `${process.env.WORDPRESS_URL}/aura-ember-artifact/?session_id={CHECKOUT_SESSION_ID}`,
-  cancel_url: `${process.env.WORDPRESS_URL}/aura-ember-artifact/`,
-  metadata: { productType }
-});
-  
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      line_items: lineItems,
+      success_url: `https://sensicandleco.com/aura-ember-artifact/?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.WORDPRESS_URL}/aura-ember-artifact/`,
+      allow_promotion_codes: true,
+      metadata: { productType }
+    });
 
     return res.json({ url: session.url });
-  } catch (err) {
-    console.error("create-checkout error:", err);
+  } catch {
     return res.status(500).json({ error: "Could not create checkout session." });
   }
-  return res.json({ ...analytics, timestamp: new Date().toISOString() });
 });
 
 app.post("/webhook", (req, res) => {
@@ -213,8 +228,7 @@ app.post("/webhook", (req, res) => {
     const event = stripe.webhooks.constructEvent(req.body, req.headers["stripe-signature"], process.env.STRIPE_WEBHOOK_SECRET);
     if (event.type === "checkout.session.completed") markSessionPaid(event.data.object.id);
     return res.sendStatus(200);
-  } catch (err) {
-    console.error("webhook verification error:", err);
+  } catch {
     return res.sendStatus(400);
   }
 });
@@ -222,7 +236,8 @@ app.post("/webhook", (req, res) => {
 app.post("/api/render-flame", async (req, res) => {
   analytics.renderFlameRequests += 1;
   try {
-    const validationError = validatePayload(req.body);
+    const normalizedBody = { ...req.body, tarotCard: normalizeTarotCard(req.body?.tarotCard) };
+    const validationError = validatePayload(normalizedBody);
     if (validationError) return res.status(400).json({ error: validationError });
 
     const sessionId = req.headers["x-flame-session-id"];
@@ -232,7 +247,8 @@ app.post("/api/render-flame", async (req, res) => {
     analytics.renderFlamePaid += 1;
     markSessionUsed(sessionId);
 
-    const { name, birthMonth, birthDay, birthYear, experience, tarotCard } = req.body;
+    const { name, birthMonth, birthDay, birthYear, experience } = normalizedBody;
+    const tarotCard = normalizedBody.tarotCard;
     const aura = auraMap[birthMonth];
     const zodiac = getZodiac(birthMonth, birthDay);
     const animal = getYearAnimal(birthYear);
@@ -257,8 +273,7 @@ app.post("/api/render-flame", async (req, res) => {
       ember: { title: copy.emberTitle || `Year of the ${animal}`, body: copy.emberBody },
       arcana: { title: copy.arcanaTitle || tarot.title, body: copy.arcanaBody }
     });
-  } catch (err) {
-    console.error("render-flame error:", err);
+  } catch {
     return res.status(500).json({ error: "Render failed." });
   }
 });
