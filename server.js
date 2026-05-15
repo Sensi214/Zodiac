@@ -92,26 +92,8 @@ function buildPrompts({ ritualType, userProfile, tarotSelected }) {
       ? `Luxury product photography of a premium matte black glass candle jar with no lid. White soy wax and one cotton wick. A single elegant gold-leaf label on the front reads "SOLAR RETURN: ${zodiac}". The label includes a radiant sunburst mandala. Dark obsidian background, warm golden glow, celestial birthday ritual aesthetic, high-end ecommerce candle photography, realistic, sharp focus.`
       : `Luxury product photography of a premium matte black glass candle jar with no lid. White soy wax and one cotton wick. Dual gold labels: front label reads "AURA: ${zodiac}" with small gold stars, secondary reflected label shows a gold mandala sigil with the year "${userProfile.year}". Dark marble background, warm golden glow, celestial manifestation aesthetic, high-end ecommerce candle photography, realistic, sharp focus.`;
 
-const prompt = `
-Create a luxury spiritual candle reading.
-
-Allowed fragrance notes ONLY:
-Mango, Cinnamon, Lavender, Eucalyptus, Lemon, Grapefruit, Orange, Vanilla, Sandalwood.
-
-Choose EXACTLY 3 fragrance notes from that list.
-
-Return JSON:
-{
-  "candle_name": "",
-  "meaning": "",
-  "signature": "",
-  "aura_desc": "",
-  "ember_desc": "",
-  "fragrance_notes": "",
-  "horoscope": "",
-  "insight": ""
-}
-`;
+const textPrompt = `
+Create a luxury mystical candle result for an ecommerce ritual experience.
 
 Ritual type: ${ritualType}
 Birth date: ${userProfile.month}/${userProfile.day}/${userProfile.year}
