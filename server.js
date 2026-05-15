@@ -279,6 +279,4 @@ app.post("/api/render-flame", async (req, res) => {
 });
 
 const port = Number(process.env.PORT || 3000);
-app.listen(port, () => {
-  console.log(`Running on ${port}`);
-});
+app.listen(port, () => console.log(`Running on ${port}`));
