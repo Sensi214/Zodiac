@@ -63,7 +63,6 @@ function validateDate(birthMonth, birthDay, birthYear) {
 
 function validatePayload(body) {
   const { name, birthMonth, birthDay, birthYear, experience, tarotCard } = body;
-
   if (!name || typeof name !== "string") return "Invalid name.";
   if (!Number.isInteger(birthMonth) || birthMonth < 1 || birthMonth > 12) return "Invalid month.";
   if (!Number.isInteger(birthDay) || birthDay < 1 || birthDay > 31) return "Invalid day.";
@@ -201,6 +200,7 @@ app.post("/api/create-checkout", async (req, res) => {
     console.error("create-checkout error:", err);
     return res.status(500).json({ error: "Could not create checkout session." });
   }
+  return res.json({ ...analytics, timestamp: new Date().toISOString() });
 });
 
 app.post("/webhook", (req, res) => {
@@ -262,6 +262,4 @@ app.post("/api/render-flame", async (req, res) => {
 });
 
 const port = Number(process.env.PORT || 3000);
-app.listen(port, () => {
-  console.log(`Running on ${port}`);
-});
+app.listen(port, () => console.log(`Running on ${port}`));
