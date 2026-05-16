@@ -123,45 +123,44 @@ function buildPrompts({
     userProfile.zodiac ||
     getZodiac(userProfile.month, userProfile.day);
 
-  const imagePrompt =
-    ritualType === "birthday"
-      ? `
-Luxury product photography of a premium matte black glass candle jar with no lid.
-
-White soy wax and one cotton wick.
-
-A single elegant gold-leaf label on the front reads:
+const imagePrompt =
+  ritualType === "birthday"
+    ? `
+Luxury ecommerce product photography of a premium AMBER GLASS candle jar.
+The candle jar must ALWAYS be amber glass.
+Minimal luxury design.
+White soy wax with one centered cotton wick.
+Elegant gold foil label reading:
 "SOLAR RETURN: ${zodiac}"
 
-The label includes a radiant sunburst mandala.
-
-Dark obsidian background.
-Warm golden glow.
-Celestial birthday ritual aesthetic.
-High-end ecommerce candle photography.
-Realistic.
-Sharp focus.
-Luxury spiritual branding.
+Warm cinematic lighting.
+Dark luxury spiritual aesthetic.
+Celestial birthday ritual mood.
+Golden glow reflections.
+High-end ecommerce photography.
+Ultra realistic.
+Luxury branding aesthetic.
+Professional product render.
 `
-      : `
-Luxury product photography of a premium matte black glass candle jar with no lid.
+    : `
+Luxury ecommerce product photography of a premium AMBER GLASS candle jar.
+The candle jar must ALWAYS be amber glass.
 
-White soy wax and one cotton wick.
+Minimal luxury vessel.
+White soy wax with one centered cotton wick.
 
-Dual gold labels:
-Front label reads:
+Front gold foil label:
 "AURA: ${zodiac}"
 
-Secondary reflected label shows a gold mandala sigil with the year:
+Secondary elegant gold sigil label with year:
 "${userProfile.year}"
 
-Dark marble background.
-Warm golden glow.
-Celestial manifestation aesthetic.
-High-end ecommerce candle photography.
-Realistic.
-Sharp focus.
-Luxury spiritual branding.
+Dark moody marble background.
+Warm golden spiritual glow.
+Luxury celestial manifestation aesthetic.
+High-end ecommerce product photography.
+Ultra realistic.
+Premium candle brand aesthetic.
 `;
 
   const textPrompt = `
