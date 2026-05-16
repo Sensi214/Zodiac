@@ -443,7 +443,73 @@ app.post("/webhook", (req, res) => {
     return res.sendStatus(400);
   }
 });
+app.post("/api/label-generate", async (req, res) => {
+  try {
+    const { prompt, labelSize } = req.body || {};
 
+    if (!prompt || typeof prompt !== "string") {
+      return res.status(400).json({ error: "Missing label prompt." });
+    }
+
+    const sizeText = labelSize || "9oz";
+
+    const flatPrompt = `
+Create a luxury flat candle label design.
+
+Label size: ${sizeText}
+Brand style: premium amber jar candle brand, elegant, luxury, clean, high-end.
+User request: ${prompt}
+
+Important:
+- Create ONLY the flat front label artwork.
+- No jar.
+- No bottle.
+- No candle.
+- No shadows.
+- Centered print-ready label design.
+- Luxury typography.
+- Suitable for amber glass candle jars.
+`;
+
+    const mockupPrompt = `
+Create a realistic luxury ecommerce mockup of an amber glass candle jar.
+
+The candle must be:
+- amber glass jar
+- white soy wax
+- one centered cotton wick
+- dark luxury background
+- warm golden lighting
+- premium candle photography
+
+The front label should match this concept:
+${prompt}
+
+Label size: ${sizeText}
+`;
+
+    const [flatResult, mockupResult] = await Promise.all([
+      openai.images.generate({
+        model: "gpt-image-1",
+        prompt: flatPrompt,
+        size: "1024x1024"
+      }),
+      openai.images.generate({
+        model: "gpt-image-1",
+        prompt: mockupPrompt,
+        size: "1024x1024"
+      })
+    ]);
+
+    return res.json({
+      flatLabel: "data:image/png;base64," + flatResult.data[0].b64_json,
+      mockup: "data:image/png;base64," + mockupResult.data[0].b64_json
+    });
+  } catch (error) {
+    console.error("label-generate error:", error);
+    return res.status(500).json({ error: "Label generation failed." });
+  }
+});
 app.listen(port, () => {
 
   console.log(`Aura & Ember backend running on ${port}`);
